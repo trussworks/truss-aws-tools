@@ -41,7 +41,31 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(res.Volumes[0])
+	volume := res.Volumes[0]
+	snapshotInput := &ec2.CreateSnapshotInput{
+		Description: volume.VolumeId,
+		VolumeId:    volume.VolumeId,
+	}
+	snapshot, err := ec2Client.CreateSnapshot(snapshotInput)
+	if err != nil {
+		log.Fatal(err)
+	}
+	tagsInput := &ec2.CreateTagsInput{
+		Resources: []*string{snapshot.SnapshotId},
+		Tags: []*ec2.Tag{
+			{
+				Key:   aws.String("Test Tag"),
+				Value: aws.String("Test Value"),
+			},
+		},
+	}
+	_, err = ec2Client.CreateTags(tagsInput)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(volume)
+	fmt.Println(snapshot)
 	// Generate name of snapshot.
 	// Get tags to copy over.
 	// Make snapshot.
