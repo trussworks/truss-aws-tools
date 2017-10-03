@@ -50,24 +50,52 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	tags := copyTags(volume.Tags)
+	tags = append(tags, &ec2.Tag{
+		Key:   aws.String("Name"),
+		Value: volume.VolumeId,
+	})
 	tagsInput := &ec2.CreateTagsInput{
 		Resources: []*string{snapshot.SnapshotId},
-		Tags: []*ec2.Tag{
-			{
-				Key:   aws.String("Test Tag"),
-				Value: aws.String("Test Value"),
-			},
-		},
+		Tags:      tags,
 	}
 	_, err = ec2Client.CreateTags(tagsInput)
 	if err != nil {
 		log.Fatal(err)
 	}
+	describeSnapshotsInput := &ec2.DescribeSnapshotsInput{
+		SnapshotIds: []*string{snapshot.SnapshotId},
+	}
+	err = ec2Client.WaitUntilSnapshotCompleted(describeSnapshotsInput)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	deleteVolumeInput := &ec2.DeleteVolumeInput{
+		VolumeId: volume.VolumeId,
+	}
+	_, err = ec2Client.DeleteVolume(deleteVolumeInput)
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Println(volume)
 	fmt.Println(snapshot)
 	// Generate name of snapshot.
 	// Get tags to copy over.
 	// Make snapshot.
 	// Apply tags.
+}
+
+// copyTags takes a slice of Tags, and copys then into a new slice,
+// pre-pending the Keys with X-.
+func copyTags(tags []*ec2.Tag) []*ec2.Tag {
+	retval := make([]*ec2.Tag, len(tags))
+	for i, tag := range tags {
+		newTag := ec2.Tag{
+			Key:   aws.String("X-" + *tag.Key),
+			Value: tag.Value,
+		}
+		retval[i] = &newTag
+	}
+	return retval
 }
