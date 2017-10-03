@@ -11,9 +11,12 @@ import (
 
 func main() {
 	var volumeID string
+	dryRun := false
 	flag.StringVar(&volumeID, "volume-id",
 		"",
 		"The EBS volumeId to delete")
+	flag.BoolVar(&dryRun, "dry-run", false,
+		"Don't make any changes and log what would have happened.")
 	flag.Parse()
 	if volumeID == "" {
 		flag.PrintDefaults()
@@ -41,49 +44,59 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	if len(res.Volumes) != 1 {
+		log.Fatal("No volumes found with volumeId: ", volumeID)
+	}
 	volume := res.Volumes[0]
 	snapshotInput := &ec2.CreateSnapshotInput{
 		Description: volume.VolumeId,
 		VolumeId:    volume.VolumeId,
 	}
-	snapshot, err := ec2Client.CreateSnapshot(snapshotInput)
-	if err != nil {
-		log.Fatal(err)
+	var snapshot *ec2.Snapshot
+	if dryRun {
+		log.Println("Creating snapshot for volumeId: ",
+			*volume.VolumeId)
+	} else {
+		snapshot, err = ec2Client.CreateSnapshot(snapshotInput)
+		if err != nil {
+			log.Fatal(err)
+		}
+		tags := copyTags(volume.Tags)
+		tags = append(tags, &ec2.Tag{
+			Key:   aws.String("Name"),
+			Value: volume.VolumeId,
+		})
+		tagsInput := &ec2.CreateTagsInput{
+			Resources: []*string{snapshot.SnapshotId},
+			Tags:      tags,
+		}
+		_, err = ec2Client.CreateTags(tagsInput)
+		if err != nil {
+			log.Fatal(err)
+		}
+		describeSnapshotsInput := &ec2.DescribeSnapshotsInput{
+			SnapshotIds: []*string{snapshot.SnapshotId},
+		}
+		err = ec2Client.WaitUntilSnapshotCompleted(describeSnapshotsInput)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
-	tags := copyTags(volume.Tags)
-	tags = append(tags, &ec2.Tag{
-		Key:   aws.String("Name"),
-		Value: volume.VolumeId,
-	})
-	tagsInput := &ec2.CreateTagsInput{
-		Resources: []*string{snapshot.SnapshotId},
-		Tags:      tags,
-	}
-	_, err = ec2Client.CreateTags(tagsInput)
-	if err != nil {
-		log.Fatal(err)
-	}
-	describeSnapshotsInput := &ec2.DescribeSnapshotsInput{
-		SnapshotIds: []*string{snapshot.SnapshotId},
-	}
-	err = ec2Client.WaitUntilSnapshotCompleted(describeSnapshotsInput)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	deleteVolumeInput := &ec2.DeleteVolumeInput{
 		VolumeId: volume.VolumeId,
 	}
-	_, err = ec2Client.DeleteVolume(deleteVolumeInput)
-	if err != nil {
-		log.Fatal(err)
+	if dryRun {
+		log.Println("Deleting volume: ", *volume.VolumeId)
+	} else {
+		_, err = ec2Client.DeleteVolume(deleteVolumeInput)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
-	fmt.Println(volume)
-	fmt.Println(snapshot)
-	// Generate name of snapshot.
-	// Get tags to copy over.
-	// Make snapshot.
-	// Apply tags.
+	if !dryRun {
+		fmt.Println(volume)
+		fmt.Println(snapshot)
+	}
 }
 
 // copyTags takes a slice of Tags, and copys then into a new slice,
