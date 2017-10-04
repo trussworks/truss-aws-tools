@@ -45,7 +45,7 @@ func main() {
 		log.Fatal(err)
 	}
 	if len(res.Volumes) != 1 {
-		log.Fatal("No volumes found with volumeId: ", volumeID)
+		log.Fatal("No volumes found with volumeId:", volumeID)
 	}
 	volume := res.Volumes[0]
 	snapshotInput := &ec2.CreateSnapshotInput{
@@ -54,7 +54,7 @@ func main() {
 	}
 	var snapshot *ec2.Snapshot
 	if dryRun {
-		log.Println("Creating snapshot for volumeId: ",
+		log.Println("Creating snapshot for volumeId:",
 			*volume.VolumeId)
 	} else {
 		snapshot, err = ec2Client.CreateSnapshot(snapshotInput)
@@ -85,12 +85,17 @@ func main() {
 	deleteVolumeInput := &ec2.DeleteVolumeInput{
 		VolumeId: volume.VolumeId,
 	}
-	if dryRun {
-		log.Println("Deleting volume: ", *volume.VolumeId)
+	cloudformed, stackName := isCloudFormed(volume)
+	if cloudformed {
+		log.Println("Volume is cloudformed. Delete stack:", stackName)
 	} else {
-		_, err = ec2Client.DeleteVolume(deleteVolumeInput)
-		if err != nil {
-			log.Fatal(err)
+		if dryRun {
+			log.Println("Deleting volume:", *volume.VolumeId)
+		} else {
+			_, err = ec2Client.DeleteVolume(deleteVolumeInput)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	}
 	if !dryRun {
@@ -111,4 +116,13 @@ func copyTags(tags []*ec2.Tag) []*ec2.Tag {
 		retval[i] = &newTag
 	}
 	return retval
+}
+
+func isCloudFormed(volume *ec2.Volume) (ok bool, stackName string) {
+	for _, tag := range volume.Tags {
+		if *tag.Key == "aws:cloudformation:stack-name" {
+			return true, *tag.Value
+		}
+	}
+	return false, ""
 }
