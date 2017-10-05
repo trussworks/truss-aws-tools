@@ -67,18 +67,16 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		tags := copyTags(volume.Tags)
-		tags = append(tags, &ec2.Tag{
-			Key:   aws.String("Name"),
-			Value: volume.VolumeId,
-		})
-		tagsInput := &ec2.CreateTagsInput{
-			Resources: []*string{snapshot.SnapshotId},
-			Tags:      tags,
-		}
-		_, err = ec2Client.CreateTags(tagsInput)
-		if err != nil {
-			log.Fatal(err)
+		if volume.Tags != nil {
+			tags := copyTags(volume.Tags)
+			tagsInput := &ec2.CreateTagsInput{
+				Resources: []*string{snapshot.SnapshotId},
+				Tags:      tags,
+			}
+			_, err = ec2Client.CreateTags(tagsInput)
+			if err != nil {
+				log.Fatal(volume, err)
+			}
 		}
 		describeSnapshotsInput := &ec2.DescribeSnapshotsInput{
 			SnapshotIds: []*string{snapshot.SnapshotId},
