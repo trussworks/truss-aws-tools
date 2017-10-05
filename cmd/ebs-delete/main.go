@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"log"
+	"strings"
 )
 
 func main() {
@@ -48,6 +49,11 @@ func main() {
 		log.Fatal("No volumes found with volumeId:", volumeID)
 	}
 	volume := res.Volumes[0]
+	cloudformed, stackName := isCloudFormed(volume)
+	if cloudformed {
+		log.Println("Volume is cloudformed. Delete stack:", stackName)
+		return
+	}
 	snapshotInput := &ec2.CreateSnapshotInput{
 		Description: volume.VolumeId,
 		VolumeId:    volume.VolumeId,
@@ -85,17 +91,13 @@ func main() {
 	deleteVolumeInput := &ec2.DeleteVolumeInput{
 		VolumeId: volume.VolumeId,
 	}
-	cloudformed, stackName := isCloudFormed(volume)
-	if cloudformed {
-		log.Println("Volume is cloudformed. Delete stack:", stackName)
+
+	if dryRun {
+		log.Println("Deleting volume:", *volume.VolumeId)
 	} else {
-		if dryRun {
-			log.Println("Deleting volume:", *volume.VolumeId)
-		} else {
-			_, err = ec2Client.DeleteVolume(deleteVolumeInput)
-			if err != nil {
-				log.Fatal(err)
-			}
+		_, err = ec2Client.DeleteVolume(deleteVolumeInput)
+		if err != nil {
+			log.Fatal(err)
 		}
 	}
 	if !dryRun {
@@ -105,15 +107,22 @@ func main() {
 }
 
 // copyTags takes a slice of Tags, and copys then into a new slice,
-// pre-pending the Keys with X-.
+// pre-pending the AWS owned Keys with X-.
 func copyTags(tags []*ec2.Tag) []*ec2.Tag {
 	retval := make([]*ec2.Tag, len(tags))
 	for i, tag := range tags {
-		newTag := ec2.Tag{
-			Key:   aws.String("X-" + *tag.Key),
-			Value: tag.Value,
+		// AWS claims ownership of any tag that starts with aws:
+		// so you can't just copy them across. Prefix with X-
+		// so we can still find them.
+		if strings.HasPrefix(*tag.Key, "aws:") {
+			newTag := ec2.Tag{
+				Key:   aws.String("X-" + *tag.Key),
+				Value: tag.Value,
+			}
+			retval[i] = &newTag
+		} else {
+			retval[i] = tag
 		}
-		retval[i] = &newTag
 	}
 	return retval
 }
