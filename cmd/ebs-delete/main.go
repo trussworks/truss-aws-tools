@@ -13,11 +13,14 @@ import (
 func main() {
 	var volumeID string
 	dryRun := false
+	force := false
 	flag.StringVar(&volumeID, "volume-id",
 		"",
 		"The EBS volumeId to delete")
 	flag.BoolVar(&dryRun, "dry-run", false,
 		"Don't make any changes and log what would have happened.")
+	flag.BoolVar(&force, "force", false,
+		"Delete the volume even if it's part of a CloudFormation stack.")
 	flag.Parse()
 	if volumeID == "" {
 		flag.PrintDefaults()
@@ -50,7 +53,7 @@ func main() {
 	}
 	volume := res.Volumes[0]
 	cloudformed, stackName := isCloudFormed(volume)
-	if cloudformed {
+	if cloudformed && !force {
 		log.Println("Volume is cloudformed. Delete stack:", stackName)
 		return
 	}
