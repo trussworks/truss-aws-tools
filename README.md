@@ -16,3 +16,4 @@ We use the upcoming Go dependency manager `dep`. `brew install dep` will get it 
 * rds snapshot cleaner
 * redshift snapshot cleaner
 * automatic filesystem resizer (use case: you can make EBS volumes larger, but if you do, you still have to go in and run resize2fs (or whatever). Why not just do this at boot always?
+* Packer debris cleaner (old instances, security groups, etc)
