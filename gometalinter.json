@@ -1,4 +1,8 @@
 {
+  "aggregate": true,
+  "disable": [
+    "gocyclo"
+  ],
   "fast": true,
   "vendor": true
 }

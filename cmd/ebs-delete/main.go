@@ -1,13 +1,15 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"log"
-	"strings"
 )
 
 func main() {
@@ -26,14 +28,97 @@ func main() {
 		flag.PrintDefaults()
 		return
 	}
+	ec2Client, err := makeEC2Client()
+	if err != nil {
+		log.Fatal(err)
+	}
+	volume, err := findVolume(ec2Client, volumeID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	cloudformed, stackName := isCloudFormed(volume)
+	if cloudformed && !force {
+		log.Println("Volume is cloudformed. Delete stack:", stackName)
+		return
+	}
+	var snapshot *ec2.Snapshot
+	if dryRun {
+		log.Println("Creating snapshot for volumeId:",
+			*volume.VolumeId)
+	} else {
+		snapshot, err = createSnapshotAndWaitUntilCompleted(ec2Client,
+			volume)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	if dryRun {
+		log.Println("Deleting volume:", *volume.VolumeId)
+	} else {
+		err = deleteVolume(ec2Client, volume)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	if !dryRun {
+		fmt.Println(volume)
+		fmt.Println(snapshot)
+	}
+}
+
+// makeEC2Client makes an EC2 client
+func makeEC2Client() (*ec2.EC2, error) {
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String("us-west-2"),
 	})
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	ec2Client := ec2.New(sess)
-	// volume-id - The volume ID.
+	return ec2Client, nil
+}
+
+// createSnapshotAndWaitUntilCompleted takes a snapshot of an EC2 volume,
+// and returns when the snapshot has completed.
+func createSnapshotAndWaitUntilCompleted(client *ec2.EC2,
+	volume *ec2.Volume) (snapshot *ec2.Snapshot, err error) {
+	snapshotInput := &ec2.CreateSnapshotInput{
+		Description: volume.VolumeId,
+		VolumeId:    volume.VolumeId,
+	}
+	snapshot, err = client.CreateSnapshot(snapshotInput)
+	if err != nil {
+		return snapshot, err
+	}
+	err = copyVolumeTagsToSnapshot(client, volume, snapshot)
+	if err != nil {
+		return snapshot, err
+	}
+	describeSnapshotInput := &ec2.DescribeSnapshotsInput{
+		SnapshotIds: []*string{snapshot.SnapshotId},
+	}
+	err = client.WaitUntilSnapshotCompleted(describeSnapshotInput)
+	return snapshot, err
+}
+
+// copyVolumeTagsToSnapshot copies all tags from the volume to the snapshot
+func copyVolumeTagsToSnapshot(client *ec2.EC2,
+	volume *ec2.Volume,
+	snapshot *ec2.Snapshot) (err error) {
+	if volume.Tags != nil {
+		tags := copyTags(volume.Tags)
+		tagsInput := &ec2.CreateTagsInput{
+			Resources: []*string{snapshot.SnapshotId},
+			Tags:      tags,
+		}
+		_, err := client.CreateTags(tagsInput)
+		return err
+	}
+	return nil
+}
+
+// findVolume gets a Volume from a volumeid
+func findVolume(client *ec2.EC2, volumeID string) (*ec2.Volume, error) {
 	input := &ec2.DescribeVolumesInput{
 		Filters: []*ec2.Filter{
 			{
@@ -44,67 +129,23 @@ func main() {
 			},
 		},
 	}
-	res, err := ec2Client.DescribeVolumes(input)
+	res, err := client.DescribeVolumes(input)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	if len(res.Volumes) != 1 {
-		log.Fatal("No volumes found with volumeId:", volumeID)
+		return nil, errors.New("No volumes found with volumeId: " + volumeID)
 	}
-	volume := res.Volumes[0]
-	cloudformed, stackName := isCloudFormed(volume)
-	if cloudformed && !force {
-		log.Println("Volume is cloudformed. Delete stack:", stackName)
-		return
-	}
-	snapshotInput := &ec2.CreateSnapshotInput{
-		Description: volume.VolumeId,
-		VolumeId:    volume.VolumeId,
-	}
-	var snapshot *ec2.Snapshot
-	if dryRun {
-		log.Println("Creating snapshot for volumeId:",
-			*volume.VolumeId)
-	} else {
-		snapshot, err = ec2Client.CreateSnapshot(snapshotInput)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if volume.Tags != nil {
-			tags := copyTags(volume.Tags)
-			tagsInput := &ec2.CreateTagsInput{
-				Resources: []*string{snapshot.SnapshotId},
-				Tags:      tags,
-			}
-			_, err = ec2Client.CreateTags(tagsInput)
-			if err != nil {
-				log.Fatal(volume, err)
-			}
-		}
-		describeSnapshotsInput := &ec2.DescribeSnapshotsInput{
-			SnapshotIds: []*string{snapshot.SnapshotId},
-		}
-		err = ec2Client.WaitUntilSnapshotCompleted(describeSnapshotsInput)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
+	return res.Volumes[0], nil
+}
+
+// deleteVolume deletes the volume
+func deleteVolume(client *ec2.EC2, volume *ec2.Volume) (err error) {
 	deleteVolumeInput := &ec2.DeleteVolumeInput{
 		VolumeId: volume.VolumeId,
 	}
-
-	if dryRun {
-		log.Println("Deleting volume:", *volume.VolumeId)
-	} else {
-		_, err = ec2Client.DeleteVolume(deleteVolumeInput)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	if !dryRun {
-		fmt.Println(volume)
-		fmt.Println(snapshot)
-	}
+	_, err = client.DeleteVolume(deleteVolumeInput)
+	return err
 }
 
 // copyTags takes a slice of Tags, and copys then into a new slice,
