@@ -1,4 +1,5 @@
 {
+  "aggregate": true,
   "fast": true,
   "vendor": true
 }
