@@ -1,5 +1,6 @@
 test:
 	go test github.com/trussworks/truss-aws-tools/...
-
 all:
 	go install github.com/trussworks/truss-aws-tools/...
+dep:
+	dep ensure
