@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
 	"reflect"
 	"testing"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
 func newCloudFormedVolume() *ec2.Volume {
@@ -65,7 +66,7 @@ func TestIsCloudformed(t *testing.T) {
 	}
 
 	want = false
-	have, haveStackName = isCloudFormed(newVolume())
+	have, _ = isCloudFormed(newVolume())
 	if have != want {
 		t.Fatalf("isCloudFormed(volume) = %v, want %v", have, want)
 	}
