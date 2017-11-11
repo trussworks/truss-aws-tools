@@ -1,0 +1,19 @@
+repos:
+  - repo: git://github.com/pre-commit/pre-commit-hooks
+    sha: v1.1.0
+    hooks:
+      - id: trailing-whitespace
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: check-yaml
+      - id: check-json
+      - id: pretty-format-json
+        args:
+          - --autofix
+  - repo: git://github.com/dnephin/pre-commit-golang
+    sha: HEAD
+    hooks:
+      - id: go-fmt
+      - id: go-vet
+      - id: go-lint
+      - id: gometalinter
