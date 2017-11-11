@@ -7,5 +7,10 @@ jobs:
     steps:
       - checkout
       - run: go get -u github.com/golang/dep/cmd/dep
+      - run: go get -u github.com/alecthomas/gometalinter
+      - run: gometalinter --install
+      - run: sudo apt-get install python-pip
+      - run: sudo pip install pre-commit
       - run: make dep
+      - run: make pre-commit
       - run: make test
