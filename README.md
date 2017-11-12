@@ -4,7 +4,33 @@ AWS tools that come in handy.
 
 We use the upcoming Go dependency manager `dep`. `brew install dep` will get it for you.
 
-* ebs-delete exists, needs tests and refactoring.
+* ebs-delete snapshots an EBS volume before deleting, and won't delete volumes that belong to CloudFormation stacks.
+
+## Developer Setup
+
+### Install dependencies (macOS)
+
+``` shell
+brew install dep
+brew install pre-commit
+brew install gometalinter
+gometalinter --install
+```
+
+### Install dependencies (Linux)
+
+``` shell
+go get -u github.com/golang/dep/cmd/dep
+pip install pre-commit
+go get -u github.com/alecthomas/gometalinter
+gometalinter --install
+```
+
+### Build
+
+``` shell
+make all # Automatically setup pre-commit and Go dependencies before tests and build.
+```
 
 ## Tools wanted
 
