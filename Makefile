@@ -10,10 +10,9 @@ dep: .dep.stamp
 	touch .dep.stamp
 pre-commit-install: .pre-commit-install.stamp dep
 .pre-commit-install.stamp: .git/hooks/pre-commit
-	pre-commit install
 	touch .pre-commit-install.stamp
 .git/hooks/pre-commit:
 	pre-commit install
 clean:
 	rm -f .*.stamp
-.PHONY: clean dep all test pre-commit
+.PHONY: clean dep all test pre-commit pre-commit-install
