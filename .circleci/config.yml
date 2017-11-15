@@ -16,6 +16,6 @@ jobs:
       - run: sudo pip install pre-commit
       - run: make all
       - save_cache:
-        key: dot-cache-pre-commit-{{ checksum ".pre-commit-config.yaml" }}
-        paths:
-          - ~/.cache/pre-commit
+          key: dot-cache-pre-commit-{{ checksum ".pre-commit-config.yaml" }}
+          paths:
+            - ~/.cache/pre-commit
