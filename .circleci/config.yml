@@ -6,9 +6,23 @@ jobs:
     working_directory: /go/src/github.com/trussworks/truss-aws-tools
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - dot-cache-pre-commit-{{ checksum ".pre-commit-config.yaml" }}
+      - restore_cache:
+          keys:
+            - vendor-{{ checksum "Gopkg.lock" }}
       - run: go get -u github.com/golang/dep/cmd/dep
       - run: go get -u github.com/alecthomas/gometalinter
       - run: gometalinter --install
       - run: sudo apt-get install python-pip
       - run: sudo pip install pre-commit
       - run: make all
+      - save_cache:
+          key: dot-cache-pre-commit-{{ checksum ".pre-commit-config.yaml" }}
+          paths:
+            - ~/.cache/pre-commit
+      - save_cache:
+          key: vendor-{{ checksum "Gopkg.lock" }}
+          paths:
+            - vendor
