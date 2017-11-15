@@ -9,6 +9,7 @@ jobs:
       - restore_cache:
           keys:
             - dot-cache-pre-commit-{{ checksum ".pre-commit-config.yaml" }}
+            - vendor-{{ checksum "Gopkg.lock" }}
       - run: go get -u github.com/golang/dep/cmd/dep
       - run: go get -u github.com/alecthomas/gometalinter
       - run: gometalinter --install
@@ -19,3 +20,7 @@ jobs:
           key: dot-cache-pre-commit-{{ checksum ".pre-commit-config.yaml" }}
           paths:
             - ~/.cache/pre-commit
+      - save_cache:
+          key: vendor-{{ checksum "Gopkg.lock" }}
+          paths:
+            - vendor
