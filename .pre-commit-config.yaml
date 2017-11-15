@@ -1,6 +1,6 @@
 repos:
   - repo: git://github.com/pre-commit/pre-commit-hooks
-    sha: v1.1.0
+    sha: v1.1.1
     hooks:
       - id: trailing-whitespace
       - id: check-merge-conflict
@@ -11,7 +11,11 @@ repos:
         args:
           - --autofix
   - repo: git://github.com/dnephin/pre-commit-golang
-    sha: HEAD
+    sha: v0.2
     hooks:
       - id: go-fmt
       - id: gometalinter
+  - repo: git://github.com/igorshubovych/markdownlint-cli
+    sha: v0.5.0
+    hooks:
+      - id: markdownlint
