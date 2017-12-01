@@ -13,12 +13,13 @@ import (
 )
 
 func main() {
-	var volumeID string
+	var volumeID, region string
 	dryRun := false
 	force := false
 	flag.StringVar(&volumeID, "volume-id",
 		"",
 		"The EBS volumeId to delete")
+	flag.StringVar(&region, "region", "us-east-1", "The AWS region to use.")
 	flag.BoolVar(&dryRun, "dry-run", false,
 		"Don't make any changes and log what would have happened.")
 	flag.BoolVar(&force, "force", false,
@@ -28,7 +29,7 @@ func main() {
 		flag.PrintDefaults()
 		return
 	}
-	ec2Client, err := makeEC2Client()
+	ec2Client, err := makeEC2Client(region)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -67,9 +68,9 @@ func main() {
 }
 
 // makeEC2Client makes an EC2 client
-func makeEC2Client() (*ec2.EC2, error) {
+func makeEC2Client(region string) (*ec2.EC2, error) {
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-west-2"),
+		Region: &region,
 	})
 	if err != nil {
 		return nil, err
