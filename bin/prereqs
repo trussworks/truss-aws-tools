@@ -1,0 +1,26 @@
+#! /usr/bin/env bash
+
+set -eu -o pipefail
+
+prereqs_found=true
+
+function has() {
+    local tool=$1
+    if [[ ! -z $(type -p "${tool}") ]]; then
+        echo "${tool} installed."
+    else
+        echo "WARNING: ${tool} not found."
+        prereqs_found=false
+    fi
+}
+
+has dep
+has pre-commit
+has gometalinter
+
+if [[ $prereqs_found == "true" ]]; then
+    echo "OK: all prereqs found"
+else
+    echo "ERROR: some prereqs missing, please install them"
+    exit 1
+fi

@@ -1,3 +1,5 @@
+SHELL = /bin/sh
+
 all: dep pre-commit-install test
 	go install github.com/trussworks/truss-aws-tools/...
 test: dep pre-commit
@@ -5,7 +7,7 @@ test: dep pre-commit
 pre-commit: pre-commit-install
 	pre-commit run --all-files
 dep: .dep.stamp
-.dep.stamp: Gopkg.lock
+.dep.stamp: Gopkg.lock .prereqs.stamp
 	dep ensure
 	touch .dep.stamp
 pre-commit-install: .pre-commit-install.stamp dep
@@ -13,6 +15,10 @@ pre-commit-install: .pre-commit-install.stamp dep
 	touch .pre-commit-install.stamp
 .git/hooks/pre-commit:
 	pre-commit install
+prereqs: .prereqs.stamp
+.prereqs.stamp: bin/prereqs
+	bin/prereqs
+	touch .prereqs.stamp
 clean:
 	rm -f .*.stamp
-.PHONY: clean dep all test pre-commit pre-commit-install
+.PHONY: clean dep all test pre-commit pre-commit-install prereqs

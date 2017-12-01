@@ -2,8 +2,6 @@
 
 AWS tools that come in handy.
 
-We use the upcoming Go dependency manager `dep`. `brew install dep` will get it for you.
-
 * ebs-delete snapshots an EBS volume before deleting, and won't delete volumes that belong to CloudFormation stacks.
 
 ## Developer Setup
