@@ -42,3 +42,4 @@ make all # Automatically setup pre-commit and Go dependencies before tests and b
 * automatic filesystem resizer (use case: you can make EBS volumes larger, but if you do, you still have to go in and run resize2fs (or whatever). Why not just do this at boot always?
 * Packer debris cleaner (old instances, security groups, etc)
 * AWS id lookup (ie, figure out from the id which describe API to call, and do it).
+* ebs snapshot creator (for all EBS volumes, trigger a snapshot).
