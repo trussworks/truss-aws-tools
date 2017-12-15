@@ -43,3 +43,4 @@ make all # Automatically setup pre-commit and Go dependencies before tests and b
 * Packer debris cleaner (old instances, security groups, etc)
 * AWS id lookup (ie, figure out from the id which describe API to call, and do it).
 * ebs snapshot creator (for all EBS volumes, trigger a snapshot).
+* Something that will pull AWS Bucket Inventory data (AWS ships it as an Athena or Hive compatible format, so you need to read a manifest.json and then pull a set of CSV or ORC files).
