@@ -3,15 +3,15 @@
 
 [[projects]]
   name = "github.com/aws/aws-sdk-go"
-  packages = ["aws","aws/awserr","aws/awsutil","aws/client","aws/client/metadata","aws/corehandlers","aws/credentials","aws/credentials/ec2rolecreds","aws/credentials/endpointcreds","aws/credentials/stscreds","aws/defaults","aws/ec2metadata","aws/endpoints","aws/request","aws/session","aws/signer/v4","internal/shareddefaults","private/protocol","private/protocol/ec2query","private/protocol/query","private/protocol/query/queryutil","private/protocol/rest","private/protocol/xml/xmlutil","service/cloudwatch","service/ec2","service/sts"]
-  revision = "c652f9369083515c3ddf1fbaf6df68da2c101545"
-  version = "v1.12.1"
+  packages = ["aws","aws/awserr","aws/awsutil","aws/client","aws/client/metadata","aws/corehandlers","aws/credentials","aws/credentials/ec2rolecreds","aws/credentials/endpointcreds","aws/credentials/stscreds","aws/defaults","aws/ec2metadata","aws/endpoints","aws/request","aws/session","aws/signer/v4","internal/shareddefaults","private/protocol","private/protocol/ec2query","private/protocol/query","private/protocol/query/queryutil","private/protocol/rest","private/protocol/restxml","private/protocol/xml/xmlutil","service/cloudwatch","service/ec2","service/s3","service/sts"]
+  revision = "f62f7b7c5425f2b1a630932617477bdeac6dc371"
+  version = "v1.12.55"
 
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "20b96f641a5ea98f2f8619ff4f3e061cff4833bd"
-  version = "v1.28.2"
+  revision = "32e4c1e6bc4e7d0d8451aa6b75200d19e37a536a"
+  version = "v1.32.0"
 
 [[projects]]
   name = "github.com/jmespath/go-jmespath"
@@ -21,6 +21,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ff5daa5ee283bb3bb98ab1f85a85fa1b15cd5af668cf6409587fb252f519fa02"
+  inputs-digest = "f8583dff778f6ce7e8803e11f124619a1eb7558e8d90da70853c0e4568599e5e"
   solver-name = "gps-cdcl"
   solver-version = 1
