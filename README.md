@@ -3,6 +3,7 @@
 AWS tools that come in handy.
 
 * ebs-delete snapshots an EBS volume before deleting, and won't delete volumes that belong to CloudFormation stacks.
+* s3-bucket-size figures out how many bytes are in a given bucket as of the last CloudWatch metric update. Must faster and cheaper than iterating over all of the objects and usually "good enough".
 
 ## Developer Setup
 
