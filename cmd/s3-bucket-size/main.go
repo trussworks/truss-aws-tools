@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"sort"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -119,11 +120,18 @@ func getBucketSizeInBytes(c *cloudwatch.CloudWatch,
 		return 0, err
 	}
 	if m.Datapoints != nil {
-		return int(*m.Datapoints[0].Average), nil
+		return int(getAverageFromLatestDatapoint(m.Datapoints)), nil
 	}
 	// If there aren't any objects of a given storage type, there will be
 	// no Datapoints. In this case, return 0 bytes.
 	return 0, nil
+}
+
+func getAverageFromLatestDatapoint(d []*cloudwatch.Datapoint) float64 {
+	sort.SliceStable(d, func(i, j int) bool {
+		return d[i].Timestamp.Before(*d[j].Timestamp)
+	})
+	return *d[0].Average
 }
 
 type cloudWatchStorageType int
@@ -145,7 +153,16 @@ func makeGetMetricStatisticsInputForSize(bucket string, storageType cloudWatchSt
 		storageTypeString = "ReducedRedundancyStorage"
 	}
 	now := time.Now()
-	startTime := now.Add(-time.Duration(86400) * time.Second)
+	// CloudWatch daily metrics can take some time to
+	// generate. Even if all of your metrics are generated for
+	// "daily at 1AM UTC", you may not be able to see that
+	// datapoint for several hours after 1AM UTC while it's been
+	// calculated by S3. This means that if you naively ask for
+	// metrics since 1 day ago, you'll sometimes get nothing back
+	// depending on what time of day you ask. Instead, ask for
+	// metrics going back 2 days, and use the latest Datapoint you
+	// get.
+	startTime := now.Add(-time.Duration(86400*3) * time.Second)
 	d := []*cloudwatch.Dimension{
 		&cloudwatch.Dimension{
 			Name:  aws.String("BucketName"),
