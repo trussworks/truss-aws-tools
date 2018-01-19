@@ -8,18 +8,19 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/trussworks/truss-aws-tools/internal/aws/session"
 )
 
 func main() {
-	var volumeID, region string
+	var volumeID, profile, region string
 	dryRun := false
 	force := false
 	flag.StringVar(&volumeID, "volume-id",
 		"",
 		"The EBS volumeId to delete")
-	flag.StringVar(&region, "region", "us-east-1", "The AWS region to use.")
+	flag.StringVar(&region, "region", "", "The AWS region to use.")
+	flag.StringVar(&profile, "profile", "", "The AWS profile to use.")
 	flag.BoolVar(&dryRun, "dry-run", false,
 		"Don't make any changes and log what would have happened.")
 	flag.BoolVar(&force, "force", false,
@@ -29,10 +30,7 @@ func main() {
 		flag.PrintDefaults()
 		return
 	}
-	ec2Client, err := makeEC2Client(region)
-	if err != nil {
-		log.Fatal(err)
-	}
+	ec2Client := makeEC2Client(region, profile)
 	volume, err := findVolume(ec2Client, volumeID)
 	if err != nil {
 		log.Fatal(err)
@@ -68,15 +66,10 @@ func main() {
 }
 
 // makeEC2Client makes an EC2 client
-func makeEC2Client(region string) (*ec2.EC2, error) {
-	sess, err := session.NewSession(&aws.Config{
-		Region: &region,
-	})
-	if err != nil {
-		return nil, err
-	}
+func makeEC2Client(region, profile string) *ec2.EC2 {
+	sess := session.MustMakeSession(region, profile)
 	ec2Client := ec2.New(sess)
-	return ec2Client, nil
+	return ec2Client
 }
 
 // createSnapshotAndWaitUntilCompleted takes a snapshot of an EC2 volume,

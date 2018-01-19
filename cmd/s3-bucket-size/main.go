@@ -8,34 +8,29 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/s3"
+
+	"github.com/trussworks/truss-aws-tools/internal/aws/session"
 )
 
 func main() {
-	var bucket, region string
+	var bucket, profile, region string
 	flag.StringVar(&bucket, "bucket", "", "The S3 bucket to get the size.")
-	flag.StringVar(&region, "region", "us-east-1", "The AWS region to use.")
+	flag.StringVar(&region, "region", "", "The AWS region to use.")
+	flag.StringVar(&profile, "profile", "", "The AWS profile to use.")
 	flag.Parse()
 	if bucket == "" {
 		flag.PrintDefaults()
 		return
 	}
-	s3Client, err := makeS3Client(region)
-	if err != nil {
-		log.Fatal(err)
-	}
+	s3Client := makeS3Client(region, profile)
 	bucketregion, err := getBucketRegion(s3Client, bucket)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	cloudWatchClient, err := makeCloudWatchClient(bucketregion)
-	if err != nil {
-		log.Fatal(err)
-
-	}
+	cloudWatchClient := makeCloudWatchClient(bucketregion, profile)
 	size, err := getBucketSize(cloudWatchClient, bucket)
 	if err != nil {
 		log.Fatal(err)
@@ -44,27 +39,17 @@ func main() {
 }
 
 // makeS3Client makes an S3 client
-func makeS3Client(region string) (*s3.S3, error) {
-	sess, err := session.NewSession(&aws.Config{
-		Region: &region,
-	})
-	if err != nil {
-		return nil, err
-	}
+func makeS3Client(region, profile string) *s3.S3 {
+	sess := session.MustMakeSession(region, "")
 	c := s3.New(sess)
-	return c, nil
+	return c
 }
 
 // makeCloudWatchClient makes a CloudWatch client
-func makeCloudWatchClient(region string) (*cloudwatch.CloudWatch, error) {
-	sess, err := session.NewSession(&aws.Config{
-		Region: &region,
-	})
-	if err != nil {
-		return nil, err
-	}
+func makeCloudWatchClient(region, profile string) *cloudwatch.CloudWatch {
+	sess := session.MustMakeSession(region, profile)
 	cloudWatchClient := cloudwatch.New(sess)
-	return cloudWatchClient, nil
+	return cloudWatchClient
 }
 
 func getBucketRegion(c *s3.S3, bucket string) (string, error) {
