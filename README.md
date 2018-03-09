@@ -3,6 +3,7 @@
 AWS tools that come in handy.
 
 * ebs-delete snapshots an EBS volume before deleting, and won't delete volumes that belong to CloudFormation stacks.
+* rds-snapshot-cleaner removes manual snapshot for a RDS instance that are older than X days or over a maximum snapshot count.
 * s3-bucket-size figures out how many bytes are in a given bucket as of the last CloudWatch metric update. Must faster and cheaper than iterating over all of the objects and usually "good enough".
 
 ## Developer Setup
@@ -38,7 +39,6 @@ make all # Automatically setup pre-commit and Go dependencies before tests and b
 * ami-deregister that doesn't touch AMIs that are currently active or have been recently.
 * ebs volume snapshot deleter (all snaps older than x days, support keep tags)
 
-* rds snapshot cleaner
 * redshift snapshot cleaner
 * automatic filesystem resizer (use case: you can make EBS volumes larger, but if you do, you still have to go in and run resize2fs (or whatever). Why not just do this at boot always?
 * Packer debris cleaner (old instances, security groups, etc)
