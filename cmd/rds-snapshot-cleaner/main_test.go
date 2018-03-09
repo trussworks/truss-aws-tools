@@ -19,7 +19,7 @@ var oldDBSnapshot = &rds.DBSnapshot{
 var newDBSnapshot = &rds.DBSnapshot{
 	DBInstanceIdentifier: aws.String("foo-db"),
 	DBSnapshotIdentifier: aws.String("new-snapshot"),
-	SnapshotCreateTime:   aws.Time(getTime("2017-03-02T22:00:00+00:00")),
+	SnapshotCreateTime:   aws.Time(getTime("2017-03-03T22:00:00+00:00")),
 	Status:               aws.String("available"),
 }
 
@@ -33,11 +33,11 @@ func getTime(original string) (parsed time.Time) {
 
 func TestSortDBSnapshots(t *testing.T) {
 	wantDBSnapshots := []*rds.DBSnapshot{
-		oldDBSnapshot,
-		newDBSnapshot}
-	haveDBSnapshots := []*rds.DBSnapshot{
 		newDBSnapshot,
 		oldDBSnapshot}
+	haveDBSnapshots := []*rds.DBSnapshot{
+		oldDBSnapshot,
+		newDBSnapshot}
 
 	sortDBSnapshots(haveDBSnapshots)
 	if !reflect.DeepEqual(wantDBSnapshots, haveDBSnapshots) {
@@ -48,38 +48,40 @@ func TestSortDBSnapshots(t *testing.T) {
 
 }
 
-func TestFindExpiredDBSnapshots(t *testing.T) {
+func TestFindDBSnapshotsToDelete(t *testing.T) {
 	dbSnapshots := []*rds.DBSnapshot{
+		newDBSnapshot,
 		newDBSnapshot,
 		oldDBSnapshot,
 	}
+	expirationTime := getTime("2017-03-02T22:00:00+00:00")
+	maxDBSnapshotCount := 0
 	wantExpiredDBSnapshots := []*rds.DBSnapshot{oldDBSnapshot}
-	expirationTime := getTime("2017-03-01T22:00:00+00:00")
 
-	haveExpiredDBSnapshots, err := findExpiredDBSnapshots(dbSnapshots, expirationTime)
+	haveExpiredDBSnapshots, err := findDBSnapshotsToDelete(dbSnapshots, expirationTime, maxDBSnapshotCount)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(wantExpiredDBSnapshots, haveExpiredDBSnapshots) {
-		t.Fatalf("findExpiredDBSnapshots(haveDBSnapshots, %s) = %v, \nwant = %v",
+		t.Fatalf("findDBSnapshotsToDelete(haveDBSnapshots, %s, %d) = %v, \nwant = %v",
 			expirationTime,
+			maxDBSnapshotCount,
 			haveExpiredDBSnapshots,
 			wantExpiredDBSnapshots)
 	}
 
-}
-
-func TestFindOverProvisionedDBSnapshots(t *testing.T) {
-	dbSnapshots := []*rds.DBSnapshot{
-		newDBSnapshot,
-		oldDBSnapshot,
+	expirationTime = getTime("2017-02-28T22:00:00+00:00")
+	wantMaxDBSnapshots := []*rds.DBSnapshot{oldDBSnapshot}
+	haveMaxDBSnapshots, err := findDBSnapshotsToDelete(dbSnapshots, expirationTime, 2)
+	if err != nil {
+		t.Fatal(err)
 	}
-	wantOverProvisionedDBSnapshots := []*rds.DBSnapshot{oldDBSnapshot}
-	haveOverProvisionedDBSnapshots := findOverProvisionedDBSnapshots(dbSnapshots, 1)
-
-	if !reflect.DeepEqual(wantOverProvisionedDBSnapshots, haveOverProvisionedDBSnapshots) {
-		t.Fatalf("findOverProvisionedDBSnapshots(haveDBSnapshots, 1) = %v, \nwant = %v",
-			haveOverProvisionedDBSnapshots,
-			wantOverProvisionedDBSnapshots)
+	if !reflect.DeepEqual(wantMaxDBSnapshots, haveMaxDBSnapshots) {
+		t.Fatalf("findDBSnapshotsToDelete(haveDBSnapshots, %s, %d) = %v, \nwant = %v",
+			expirationTime,
+			maxDBSnapshotCount,
+			haveMaxDBSnapshots,
+			wantMaxDBSnapshots)
 	}
+
 }

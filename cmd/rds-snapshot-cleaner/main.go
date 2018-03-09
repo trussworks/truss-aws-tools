@@ -18,17 +18,17 @@ const (
 
 func main() {
 	var dbInstanceIdentifier, profile, region string
-	var retentionDays, maxSnapshotCount int
+	var retentionDays, maxDBSnapshotCount int
 	dryRun := false
 
-	flag.StringVar(&dbInstanceIdentifier, "db-identifier",
+	flag.StringVar(&dbInstanceIdentifier, "db-instance-identifier",
 		"",
-		"The RDS instance identifier.")
+		"The RDS database instance identifier.")
 	flag.IntVar(&retentionDays, "retention-days",
 		30,
 		"The maximum retention age in days.")
-	flag.IntVar(&maxSnapshotCount, "max-snapshots",
-		50,
+	flag.IntVar(&maxDBSnapshotCount, "max-snapshots",
+		0,
 		"The maximum number of manual snapshots allowed. This takes precedence over -retention-days.")
 	flag.StringVar(&region, "region", "", "The AWS region to use.")
 	flag.StringVar(&profile, "profile", "", "The AWS profile to use.")
@@ -40,7 +40,7 @@ func main() {
 		log.Fatal("DB instance identifier is required")
 	}
 
-	if maxSnapshotCount < 0 {
+	if maxDBSnapshotCount < 0 {
 		log.Fatal("max-snapshots must be greater than 0")
 	}
 	rdsClient := makeRDSClient(region, profile)
@@ -54,26 +54,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// first look for snapshots that are expired
-	expiredDBSnapshots, err := findExpiredDBSnapshots(manualDBSnapshots, expirationDate)
+	dbSnapshotsToDelete, err := findDBSnapshotsToDelete(manualDBSnapshots, expirationDate, maxDBSnapshotCount)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println("Deleting expired DB snapshots")
-	err = deleteDBSnapshots(rdsClient, expiredDBSnapshots, dryRun)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// then look for snapshots that are beyond the max snapshot count
-	manualDBSnapshots, err = findManualDBSnapshots(rdsClient, dbInstanceIdentifier)
-	if err != nil {
-		log.Fatal(err)
-	}
-	overProvisionedDBSnapshots := findOverProvisionedDBSnapshots(manualDBSnapshots, maxSnapshotCount)
-	log.Println("Deleting over provisioned DB snapshots")
-	err = deleteDBSnapshots(rdsClient, overProvisionedDBSnapshots, dryRun)
+	err = deleteDBSnapshots(rdsClient, dbSnapshotsToDelete, dryRun)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -85,6 +71,28 @@ func makeRDSClient(region, profile string) *rds.RDS {
 	sess := session.MustMakeSession(region, profile)
 	rdsClient := rds.New(sess)
 	return rdsClient
+}
+
+// findDBSnapshotsToDelete will return a slice of DB snapshots to delete
+func findDBSnapshotsToDelete(dbSnapshots []*rds.DBSnapshot, expirationDate time.Time, maxDBSnapshotCount int) ([]*rds.DBSnapshot, error) {
+	var dbSnapshotsToDelete []*rds.DBSnapshot
+
+	sortDBSnapshots(dbSnapshots)
+	for i, s := range dbSnapshots {
+		// add snapshot to delete slice if past expiration
+		if s.SnapshotCreateTime.Before(expirationDate) {
+			dbSnapshotsToDelete = append(dbSnapshotsToDelete, s)
+			continue
+		}
+		// if we are still over maxDBSnapshots add to the delete slice
+		// skip if maxDBSnapshotsCount is 0
+		if i+1 > maxDBSnapshotCount && maxDBSnapshotCount != 0 {
+			dbSnapshotsToDelete = append(dbSnapshotsToDelete, s)
+		}
+
+	}
+
+	return dbSnapshotsToDelete, nil
 }
 
 // findManualDBSnapshots returns a slice of available manual snapshots
@@ -112,44 +120,18 @@ func findManualDBSnapshots(client *rds.RDS, dbInstanceIdentifier string) ([]*rds
 	return manualDBSnapshots, err
 }
 
-// sortDBSnapshots sorts a slice of DB snapshots in reverse chronological order(oldest first) using SnapshotCreateTime
+// sortDBSnapshots sorts a slice of DB snapshots in chronological order(newest first) using SnapshotCreateTime
 func sortDBSnapshots(dbSnapshots []*rds.DBSnapshot) {
 	// sort by snapshot creation time
 	sort.Slice(dbSnapshots, func(i, j int) bool {
-		return dbSnapshots[i].SnapshotCreateTime.Before(*dbSnapshots[j].SnapshotCreateTime)
+		return dbSnapshots[i].SnapshotCreateTime.After(*dbSnapshots[j].SnapshotCreateTime)
 	})
 }
 
-// findExpiredDBSnapshots iterates through a slice of db snapshots and deletes the ones that are expired
-func findExpiredDBSnapshots(dbSnapshots []*rds.DBSnapshot, expirationDate time.Time) ([]*rds.DBSnapshot, error) {
-	var expiredDBSnapshots []*rds.DBSnapshot
-
-	sortDBSnapshots(dbSnapshots)
-	for _, s := range dbSnapshots {
-		if s.SnapshotCreateTime.After(expirationDate) {
-			break
-		}
-
-		expiredDBSnapshots = append(expiredDBSnapshots, s)
-	}
-
-	return expiredDBSnapshots, nil
-}
-
-// findOverProvisionedDBSnapshots will return a list of snapshots that are beyond the maxSnapshotCount
-func findOverProvisionedDBSnapshots(dbSnapshots []*rds.DBSnapshot, maxSnapshotCount int) []*rds.DBSnapshot {
-	sortDBSnapshots(dbSnapshots)
-	if maxSnapshotCount <= len(dbSnapshots) {
-		overProvisionedDBSnapshots := dbSnapshots[:len(dbSnapshots)-maxSnapshotCount]
-		return overProvisionedDBSnapshots
-	}
-	return nil
-
-}
-
 //deleteDBSnapshot iterates through a list of snapshots and calls deleteDBSnapshot
-func deleteDBSnapshots(client *rds.RDS, expiredDBSnapshots []*rds.DBSnapshot, dryRun bool) error {
-	for _, e := range expiredDBSnapshots {
+func deleteDBSnapshots(client *rds.RDS, dbSnapshotsToDelete []*rds.DBSnapshot, dryRun bool) error {
+	log.Printf("%d DB snapshots to delete", len(dbSnapshotsToDelete))
+	for _, e := range dbSnapshotsToDelete {
 		if dryRun {
 			log.Printf("Would delete DB snapshot '%v' created on %v", *e.DBSnapshotIdentifier, e.SnapshotCreateTime.Format(RFC8601))
 		} else {
