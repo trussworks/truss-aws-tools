@@ -1,0 +1,5 @@
+#! /bin/sh
+
+dep ensure -vendor-only
+go build -i -o bin/go-junit-formatter \
+   ./vendor/github.com/jstemmer/go-junit-report
