@@ -4,7 +4,7 @@ jobs:
     docker:
       - image: circleci/golang:1.9
         environment:
-          - JUNIT_OUTPUT_DIR: /tmp/test-results/gotest
+          - TEST_RESULTS: /tmp/test-results
     working_directory: /go/src/github.com/trussworks/truss-aws-tools
     steps:
       - checkout
@@ -19,7 +19,7 @@ jobs:
       - run: gometalinter --install
       - run: sudo apt-get install python-pip
       - run: sudo pip install pre-commit
-      - run: mkdir -p "$JUNIT_OUTPUT_DIR"
+      - run: mkdir -p "${TEST_RESULTS}"
       - run: make all
       - save_cache:
           key: dot-cache-pre-commit-{{ checksum ".pre-commit-config.yaml" }}
