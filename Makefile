@@ -3,12 +3,12 @@ SHELL = /bin/sh
 all: dep pre-commit-install test
 	go install github.com/trussworks/truss-aws-tools/...
 test: dep pre-commit
-	go test github.com/trussworks/truss-aws-tools/...
+	bin/make-test
 pre-commit: pre-commit-install
 	pre-commit run --all-files
 dep: .dep.stamp
 .dep.stamp: Gopkg.lock .prereqs.stamp
-	dep ensure
+	bin/make-dep
 	touch .dep.stamp
 pre-commit-install: .pre-commit-install.stamp dep
 .pre-commit-install.stamp: .git/hooks/pre-commit
