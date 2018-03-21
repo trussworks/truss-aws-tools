@@ -6,6 +6,12 @@ AWS tools that come in handy.
 * rds-snapshot-cleaner removes manual snapshot for a RDS instance that are older than X days or over a maximum snapshot count.
 * s3-bucket-size figures out how many bytes are in a given bucket as of the last CloudWatch metric update. Must faster and cheaper than iterating over all of the objects and usually "good enough".
 
+## Installation
+
+``` shell
+go get -u github.com/trussworks/truss-aws-tools/...
+```
+
 ## Developer Setup
 
 ### Install dependencies (macOS)
