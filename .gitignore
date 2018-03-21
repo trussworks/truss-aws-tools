@@ -1,2 +1,3 @@
 vendor
 .*.stamp
+bin/go-junit-formatter
