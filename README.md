@@ -19,7 +19,7 @@ go get -u github.com/trussworks/truss-aws-tools/...
 ``` shell
 brew install dep
 brew install pre-commit
-brew install gometalinter
+go get -u github.com/alecthomas/gometalinter
 gometalinter --install
 ```
 
