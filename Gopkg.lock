@@ -2,6 +2,16 @@
 
 
 [[projects]]
+  name = "github.com/aws/aws-lambda-go"
+  packages = [
+    "lambda",
+    "lambda/messages",
+    "lambdacontext"
+  ]
+  revision = "4d30d0ff60440c2d0480a15747c96ee71c3c53d4"
+  version = "v1.2.0"
+
+[[projects]]
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -14,15 +24,22 @@
     "aws/credentials/ec2rolecreds",
     "aws/credentials/endpointcreds",
     "aws/credentials/stscreds",
+    "aws/csm",
     "aws/defaults",
     "aws/ec2metadata",
     "aws/endpoints",
     "aws/request",
     "aws/session",
     "aws/signer/v4",
+    "internal/sdkio",
+    "internal/sdkrand",
     "internal/shareddefaults",
     "private/protocol",
     "private/protocol/ec2query",
+    "private/protocol/eventstream",
+    "private/protocol/eventstream/eventstreamapi",
+    "private/protocol/json/jsonutil",
+    "private/protocol/jsonrpc",
     "private/protocol/query",
     "private/protocol/query/queryutil",
     "private/protocol/rest",
@@ -32,16 +49,23 @@
     "service/ec2",
     "service/rds",
     "service/s3",
-    "service/sts"
+    "service/sts",
+    "service/support"
   ]
-  revision = "f62f7b7c5425f2b1a630932617477bdeac6dc371"
-  version = "v1.12.55"
+  revision = "c9af76f2478f81c6566d0f7f4d522254ec7c0b52"
+  version = "v1.14.3"
 
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "32e4c1e6bc4e7d0d8451aa6b75200d19e37a536a"
-  version = "v1.32.0"
+  revision = "06f5f3d67269ccec1fe5fe4134ba6e982984f7f5"
+  version = "v1.37.0"
+
+[[projects]]
+  name = "github.com/jessevdk/go-flags"
+  packages = ["."]
+  revision = "c6ca198ec95c841fdb89fc0de7496fed11ab854e"
+  version = "v1.4.0"
 
 [[projects]]
   name = "github.com/jmespath/go-jmespath"
@@ -53,13 +77,39 @@
   name = "github.com/jstemmer/go-junit-report"
   packages = [
     ".",
+    "formatter",
     "parser"
   ]
-  revision = "d9db44172dfb1d1ba6d68749e38ea73f64525e93"
+  revision = "d0a98937db5130acbf4231fe8bd3897fe10a7ac7"
+
+[[projects]]
+  name = "go.uber.org/atomic"
+  packages = ["."]
+  revision = "1ea20fb1cbb1cc08cbd0d913a96dead89aa18289"
+  version = "v1.3.2"
+
+[[projects]]
+  name = "go.uber.org/multierr"
+  packages = ["."]
+  revision = "3c4937480c32f4c13a875a1829af76c98ca3d40a"
+  version = "v1.1.0"
+
+[[projects]]
+  name = "go.uber.org/zap"
+  packages = [
+    ".",
+    "buffer",
+    "internal/bufferpool",
+    "internal/color",
+    "internal/exit",
+    "zapcore"
+  ]
+  revision = "eeedf312bc6c57391d84767a4cd413f02a917974"
+  version = "v1.8.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "863653d9be671cbe86dc04aca660a862ea017ae4db595876227360e90cdee469"
+  inputs-digest = "3f24acfb32648cb3902953a6c44fa906cd05a4c9f966ce76c653af0a8b3b3a7e"
   solver-name = "gps-cdcl"
   solver-version = 1
