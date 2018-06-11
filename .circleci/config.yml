@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.9
+      - image: circleci/golang:1.10
         environment:
           - TEST_RESULTS: /tmp/test-results
     working_directory: /go/src/github.com/trussworks/truss-aws-tools
@@ -19,6 +19,7 @@ jobs:
       - run: gometalinter --install
       - run: sudo apt-get install python-pip
       - run: sudo pip install pre-commit
+      - run: sudo apt-get install shellcheck
       - run: mkdir -p "${TEST_RESULTS}"
       - run: make all
       - save_cache:
