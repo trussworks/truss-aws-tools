@@ -39,6 +39,7 @@ func (r *TrustedAdvisorRefresh) Refresh() error {
 	}
 	resp, err := r.SupportClient.DescribeTrustedAdvisorChecks(describeParams)
 	if err != nil {
+		r.Logger.Error("failed to call DescribeTrustedAdvisorChecks", zap.Error(err))
 		return err
 	}
 

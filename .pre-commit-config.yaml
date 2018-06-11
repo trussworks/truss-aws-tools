@@ -19,3 +19,7 @@ repos:
     sha: v0.5.0
     hooks:
       - id: markdownlint
+  - repo: https://github.com/jumanjihouse/pre-commit-hooks
+    sha: 1.7.1
+    hooks:
+      - id: shellcheck

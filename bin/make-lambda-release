@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+usage() {
+    echo "$0 <s3-bucket> <semantic-version>"
+    exit 1
+}
+[[ -z $1 ]] && usage
+[[ -z $2 ]] && usage
+
+set -u
+readonly s3_bucket=$1
+readonly semver=$2
+readonly zip_file="truss-aws-tools.zip"
+
+aws s3 cp "$zip_file" s3://"$s3_bucket"/truss-aws-tools/"$semver"/
