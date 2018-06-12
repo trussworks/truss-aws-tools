@@ -13,7 +13,7 @@ jobs:
             - dot-cache-pre-commit-{{ checksum ".pre-commit-config.yaml" }}
       - restore_cache:
           keys:
-            - vendor-{{ checksum "Gopkg.lock" }}
+            - v1-vendor-{{ checksum "Gopkg.lock" }}
       - run: echo 'export PATH=${PATH}:~/go/bin' >> $BASH_ENV
       - run: go get -u github.com/golang/dep/cmd/dep
       - run: go get -u github.com/alecthomas/gometalinter
@@ -25,8 +25,8 @@ jobs:
           paths:
             - ~/.cache/pre-commit
       - save_cache:
-          key: vendor-{{ checksum "Gopkg.lock" }}
+          key: v1-vendor-{{ checksum "Gopkg.lock" }}
           paths:
-            - vendor
+            - ~/go/pkg/dep
       - store_test_results:
           path: /tmp/test-results
