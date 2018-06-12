@@ -2,6 +2,14 @@
 
 set -eux -o pipefail
 
+# cleanup temp directory
+cleanup() {
+  if [[ -n "$build_dir" ]]; then
+    rm -rf "$build_dir"
+  fi
+}
+trap "cleanup" EXIT INT
+
 readonly build_dir=$(mktemp -d)
 readonly lambda_tools="rds-snapshot-cleaner trusted-advisor-refresh"
 mkdir -p "$build_dir"
@@ -13,4 +21,5 @@ do
 done
 
 zip -j truss-aws-tools.zip "$build_dir"/*
-rm -rf "$build_dir"
+
+
