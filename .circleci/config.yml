@@ -2,10 +2,10 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.10
+      - image: trussworks/circleci-docker-primary:4bb9cacfdfa1fbc995e89204f030264843f5bc91
         environment:
           - TEST_RESULTS: /tmp/test-results
-    working_directory: /go/src/github.com/trussworks/truss-aws-tools
+    working_directory: ~/go/src/github.com/trussworks/truss-aws-tools
     steps:
       - checkout
       - restore_cache:
@@ -14,12 +14,10 @@ jobs:
       - restore_cache:
           keys:
             - vendor-{{ checksum "Gopkg.lock" }}
+      - run: echo 'export PATH=${PATH}:~/go/bin' >> $BASH_ENV
       - run: go get -u github.com/golang/dep/cmd/dep
       - run: go get -u github.com/alecthomas/gometalinter
       - run: gometalinter --install
-      - run: sudo apt-get install python-pip
-      - run: sudo pip install pre-commit
-      - run: sudo apt-get install shellcheck
       - run: mkdir -p "${TEST_RESULTS}"
       - run: make all
       - save_cache:
