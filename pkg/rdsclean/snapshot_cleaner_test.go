@@ -1,4 +1,4 @@
-package main
+package rdsclean
 
 import (
 	"reflect"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
+	"go.uber.org/zap"
 )
 
 var oldDBSnapshot = &rds.DBSnapshot{
@@ -54,32 +55,40 @@ func TestFindDBSnapshotsToDelete(t *testing.T) {
 		newDBSnapshot,
 		oldDBSnapshot,
 	}
-	expirationTime := getTime("2017-03-02T22:00:00+00:00")
-	maxDBSnapshotCount := 0
+
+	logger, _ := zap.NewProduction()
+	r := RDSManualSnapshotClean{
+		DBInstanceIdentifier: "cleanme",
+		DryRun:               true,
+		ExpirationDate:       getTime("2017-03-02T22:00:00+00:00"),
+		Logger:               logger,
+		MaxDBSnapshotCount:   0,
+		RDSClient:            nil,
+	}
+
+	//expirationTime := getTime("2017-03-02T22:00:00+00:00")
+	//maxDBSnapshotCount := 0
 	wantExpiredDBSnapshots := []*rds.DBSnapshot{oldDBSnapshot}
 
-	haveExpiredDBSnapshots, err := findDBSnapshotsToDelete(dbSnapshots, expirationTime, maxDBSnapshotCount)
+	haveExpiredDBSnapshots, err := r.FindDBSnapshotsToDelete(dbSnapshots)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(wantExpiredDBSnapshots, haveExpiredDBSnapshots) {
-		t.Fatalf("findDBSnapshotsToDelete(haveDBSnapshots, %s, %d) = %v, \nwant = %v",
-			expirationTime,
-			maxDBSnapshotCount,
+		t.Fatalf("FindDBSnapshotsToDelete(haveDBSnapshots) = %v, \nwant = %v",
 			haveExpiredDBSnapshots,
 			wantExpiredDBSnapshots)
 	}
 
-	expirationTime = getTime("2017-02-28T22:00:00+00:00")
+	r.ExpirationDate = getTime("2017-02-28T22:00:00+00:00")
+	r.MaxDBSnapshotCount = 2
 	wantMaxDBSnapshots := []*rds.DBSnapshot{oldDBSnapshot}
-	haveMaxDBSnapshots, err := findDBSnapshotsToDelete(dbSnapshots, expirationTime, 2)
+	haveMaxDBSnapshots, err := r.FindDBSnapshotsToDelete(dbSnapshots)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(wantMaxDBSnapshots, haveMaxDBSnapshots) {
-		t.Fatalf("findDBSnapshotsToDelete(haveDBSnapshots, %s, %d) = %v, \nwant = %v",
-			expirationTime,
-			maxDBSnapshotCount,
+		t.Fatalf("FindDBSnapshotsToDelete(haveDBSnapshots) = %v, \nwant = %v",
 			haveMaxDBSnapshots,
 			wantMaxDBSnapshots)
 	}

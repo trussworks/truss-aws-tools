@@ -17,6 +17,7 @@ function has() {
 has dep
 has pre-commit
 has gometalinter
+has shellcheck
 
 if [[ $prereqs_found == "true" ]]; then
     echo "OK: all prereqs found"
