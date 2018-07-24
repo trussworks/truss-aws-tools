@@ -1,7 +1,8 @@
 {
   "aggregate": true,
   "disable": [
-    "gocyclo"
+    "gocyclo",
+    "vetshadow"
   ],
   "fast": true,
   "vendor": true
