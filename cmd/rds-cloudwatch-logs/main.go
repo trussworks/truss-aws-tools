@@ -27,25 +27,14 @@ type Options struct {
 var options Options
 var logger *zap.Logger
 
-func makeCloudWatchLogsClient(region, profile string) *cloudwatchlogs.CloudWatchLogs {
-	sess := session.MustMakeSession(region, profile)
-	cloudWatchLogsClient := cloudwatchlogs.New(sess)
-	return cloudWatchLogsClient
-}
-
-func makeRDSClient(region, profile string) *rds.RDS {
-	sess := session.MustMakeSession(region, profile)
-	rdsClient := rds.New(sess)
-	return rdsClient
-}
-
 func sendLogs() {
+	session := session.MustMakeSession(options.Region, options.Profile)
 	r := rdscwlogs.RDSCloudWatchLogs{
 		DBInstanceIdentifier: options.DBInstanceIdentifier,
-		CloudWatchLogsClient: makeCloudWatchLogsClient(options.Region, options.Profile),
+		CloudWatchLogsClient: cloudwatchlogs.New(session),
 		CloudWatchLogsGroup:  options.CloudWatchLogsGroup,
 		Logger:               logger,
-		RDSClient:            makeRDSClient(options.Region, options.Profile),
+		RDSClient:            rds.New(session),
 	}
 
 	var since int64
