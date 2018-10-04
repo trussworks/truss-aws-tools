@@ -2,6 +2,7 @@
   "aggregate": true,
   "disable": [
     "gocyclo",
+    "gosec",
     "vetshadow"
   ],
   "fast": true,
