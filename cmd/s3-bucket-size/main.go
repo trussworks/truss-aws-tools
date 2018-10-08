@@ -84,6 +84,12 @@ func getBucketSize(c *cloudwatch.CloudWatch, bucket string) (int, error) {
 		standardStorage,
 		standardIAStorage,
 		reducedRedundancyStorage,
+		glacierS3ObjectOverhead,
+		standardIAObjectOverhead,
+		oneZoneIAStorage,
+		oneZoneIAObjectOverhead,
+		glacierStorage,
+		glacierObjectOverhead,
 	}
 	size := 0
 	for _, storageType := range storageTypes {
@@ -125,6 +131,12 @@ const (
 	standardStorage cloudWatchStorageType = iota
 	standardIAStorage
 	reducedRedundancyStorage
+	glacierS3ObjectOverhead
+	standardIAObjectOverhead
+	oneZoneIAStorage
+	oneZoneIAObjectOverhead
+	glacierStorage
+	glacierObjectOverhead
 )
 
 func makeGetMetricStatisticsInputForSize(bucket string, storageType cloudWatchStorageType) *cloudwatch.GetMetricStatisticsInput {
@@ -136,6 +148,18 @@ func makeGetMetricStatisticsInputForSize(bucket string, storageType cloudWatchSt
 		storageTypeString = "StandardIAStorage"
 	case reducedRedundancyStorage:
 		storageTypeString = "ReducedRedundancyStorage"
+	case glacierS3ObjectOverhead:
+		storageTypeString = "GlacierS3ObjectOverhead"
+	case standardIAObjectOverhead:
+		storageTypeString = "StandardIAObjectOverhead"
+	case oneZoneIAStorage:
+		storageTypeString = "OneZoneIAStorage"
+	case oneZoneIAObjectOverhead:
+		storageTypeString = "OneZoneIAObjectOverhead"
+	case glacierStorage:
+		storageTypeString = "GlacierStorage"
+	case glacierObjectOverhead:
+		storageTypeString = "GlacierObjectOverhead"
 	}
 	now := time.Now()
 	// CloudWatch daily metrics can take some time to
