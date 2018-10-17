@@ -1,5 +1,5 @@
 SHELL = /bin/sh
-VERSION = 2.2
+VERSION = 2.3
 
 all: install
 
