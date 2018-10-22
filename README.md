@@ -5,11 +5,12 @@ AWS tools that come in handy.
 | Tool                    | Description                                                                                              | AWS Lambda Support  |
 |-------------------------|----------------------------------------------------------------------------------------------------------|---------------------|
 | ebs-delete              | snapshots an EBS volume before deleting, and won't delete volumes that belong to CloudFormation stacks.  | No                  |
-| iam-keys-check          | checks users for old access keys and sends notification to a slack webhook url                           | Yes                 |
+| iam-keys-check          | checks users for old access keys and sends notification to a Slack webhook url                           | Yes                 |
 | rds-cloudwatch-logs     | Streams logs from RDS into CloudWatch Logs. This is only really needed for PostgreSQL, until AWS makes it a proper service| Yes |
 | rds-snapshot-cleaner    | removes manual snapshot for a RDS instance that are older than X days or over a maximum snapshot count.  | Yes                 |
 | s3-bucket-size          | figures out how many bytes are in a given bucket as of the last CloudWatch metric update. Must faster and cheaper than iterating over all of the objects and usually "good enough". | No |
 | trusted-advisor-refresh | triggers a refresh of Trusted Advisor because AWS doesn't do this for you.                               | Yes                 |
+| aws-health-notifier     | Sends notifcations to a Slack webhook when AWS Health Events (read AWS outage) are triggered             | Yes                 |
 
 ## Installation
 
