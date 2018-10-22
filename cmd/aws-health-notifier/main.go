@@ -38,7 +38,7 @@ func sendNotification(event events.CloudWatchEvent) {
 	awsSession := session.MustMakeSession(options.Region, options.Profile)
 	slackWebhookURL, err := ssm.DecryptValue(awsSession, options.SSMSlackWebhookURL)
 	if err != nil {
-		log.Fatal("failed to decrypt slackWebhookURL", zap.Error(err))
+		logger.Fatal("failed to decrypt slackWebhookURL", zap.Error(err))
 	}
 	slack := slackhook.New(slackWebhookURL)
 
@@ -86,18 +86,18 @@ func lambdaHandler() {
 }
 
 func main() {
-	parser := flag.NewParser(&options, flag.Default)
-	_, err := parser.Parse()
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	var err error
 	logger, err = zap.NewProduction()
 	if err != nil {
 		log.Fatalf("can't initialize zap logger: %v", err)
 	}
+	parser := flag.NewParser(&options, flag.Default)
+
+	_, err = parser.Parse()
+	if err != nil {
+		logger.Fatal("failed to parse flags", zap.Error(err))
+	}
 
 	logger.Info("Running Lambda handler.")
 	lambdaHandler()
-
 }
