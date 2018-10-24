@@ -1,14 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"encoding/csv"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"sort"
 	"strings"
 	"time"
@@ -16,12 +13,12 @@ import (
 
 import (
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/iam"
-	"github.com/aws/aws-sdk-go/service/ssm"
 	flag "github.com/jessevdk/go-flags"
+	"github.com/lytics/slackhook"
 	"github.com/trussworks/truss-aws-tools/internal/aws/session"
+	"github.com/trussworks/truss-aws-tools/internal/aws/ssm"
 	"go.uber.org/zap"
 )
 
@@ -61,12 +58,13 @@ func newstringSet() stringSet {
 
 // Options are the command line options
 type Options struct {
+	DocumentationURL   string `short:"d" long:"documentation-url" description:"URL pointing to documentation on how-to rotate AWS access keys" required:"false" env:"DOCUMENTATION_URL"`
 	Profile            string `short:"p" long:"profile" description:"The AWS profile to use." required:"false" env:"AWS_PROFILE"`
 	Region             string `long:"region" description:"The AWS region to use." required:"false" env:"REGION"`
 	Lambda             bool   `short:"l" long:"lambda" description:"Run as an AWS lambda function." required:"false" env:"LAMBDA"`
 	MaxDays            uint   `long:"days" description:"The maximum age in days that a key can be active without triggering an alert." default:"90" env:"MAX_DAYS"`
 	PollInterval       uint   `long:"poll-interval" description:"The poll interval in milliseconds when checking if a credential report is available." default:"5000" env:"POLL_INTERVAL"`
-	SlackWebhookURL    string `long:"slack-webhook-url" description:"The Slack Webhook Url." required:"false" env:"SLACK_WEBHOOK_URL"`
+	SlackEmoji         string `long:"slack-emoji" description:"The Slack Emoji associated with the notifications." env:"SLACK_EMOJI" default:":key:"`
 	SSMSlackWebhookURL string `long:"ssm-slack-webhook-url" description:"The name of the Slack Webhook Url in Parameter store." required:"false" env:"SSM_SLACK_WEBHOOK_URL"`
 	SlackChannel       string `long:"slack-channel" description:"The Slack channel." required:"true" env:"SLACK_CHANNEL"`
 }
@@ -111,28 +109,39 @@ func getCredentialReport(iamClient *iam.IAM, tries int, pollInterval int) (*iam.
 }
 
 func sendAlertToSlack(slackWebhookURL string, usersSet stringSet, maxDays float64) error {
-
-	payload := map[string]interface{}{
-		"channel": options.SlackChannel,
-		"text":    "AWS notification",
-		"attachments": []map[string]string{
-			map[string]string{
-				"title": "Message",
-				"text":  "The following users have an active access key over " + fmt.Sprint(int(maxDays)) + " days old: " + strings.Join(usersSet.toArray(true), ", ") + "",
+	slack := slackhook.New(slackWebhookURL)
+	attachment := slackhook.Attachment{
+		Title:     "Expired IAM Access Keys",
+		Text:      fmt.Sprintf("IAM users with access keys older than %d days", int(maxDays)),
+		TitleLink: "https://console.aws.amazon.com/iam/home?region=us-west-2#/users",
+		Color:     "warn",
+		Footer:    "IAM Keys Check",
+		Fields: []slackhook.Field{
+			{
+				Title: "IAM Users",
+				Value: strings.Join(usersSet.toArray(true), ", "),
 			},
 		},
 	}
 
-	payloadJSON, err := json.Marshal(payload)
+	if options.DocumentationURL != "" {
+		attachment.Fields = append(attachment.Fields, slackhook.Field{
+			Title: "Access Key Rotation Instructions",
+			Value: options.DocumentationURL,
+		})
+	}
+
+	message := &slackhook.Message{
+		Channel:   options.SlackChannel,
+		IconEmoji: options.SlackEmoji,
+	}
+	message.AddAttachment(&attachment)
+
+	err := slack.Send(message)
 	if err != nil {
 		return err
 	}
-
-	_, err = http.Post(slackWebhookURL, "application/json", bytes.NewBuffer(payloadJSON))
-	if err != nil {
-		return err
-	}
-
+	logger.Info("successfully sent slack message", zap.String("slack-channel", options.SlackChannel))
 	return nil
 }
 
@@ -141,41 +150,16 @@ func triggerCheck() {
 	maxDays := float64(options.MaxDays)
 
 	if maxDays == 0 {
-		logger.Fatal("MaxDays must be greater than 0.")
+		logger.Fatal("days must be greater than 0.")
 	}
 
 	sess := session.MustMakeSession(options.Region, options.Profile)
-
-	slackWebhookURL := options.SlackWebhookURL
-	if len(slackWebhookURL) == 0 && len(options.SSMSlackWebhookURL) > 0 {
-		ssmClient := ssm.New(sess)
-		getParameterOutput, err := ssmClient.GetParameter(&ssm.GetParameterInput{
-			Name:           aws.String(options.SSMSlackWebhookURL),
-			WithDecryption: aws.Bool(true),
-		})
-		if err != nil {
-			if aerr, ok := err.(awserr.Error); ok {
-				if aerr.Code() == ssm.ErrCodeInternalServerError {
-					logger.Fatal("SSM appeared to have an internal error", zap.Error(err))
-				} else if aerr.Code() == ssm.ErrCodeInvalidKeyId || aerr.Code() == ssm.ErrCodeParameterNotFound || aerr.Code() == ssm.ErrCodeParameterVersionNotFound {
-					logger.Fatal("the provided SSMSlackWebHookURL appears to be invalid", zap.Error(err))
-				} else {
-					logger.Fatal("unknown AWS error", zap.Error(err))
-				}
-			}
-			logger.Fatal("unknown error calling ssmClient.GetParameter", zap.Error(err))
-		}
-		if getParameterOutput.Parameter.Value == nil {
-			logger.Fatal("getParameterOutput.Parameter.Value is nil")
-		}
-		slackWebhookURL = *getParameterOutput.Parameter.Value
-	}
-
-	if len(slackWebhookURL) == 0 {
-		logger.Fatal("SlackWebHookURL must be defined or SSMSlackWebhookURL must point to a valid parameter in Parameter Store.")
-	}
-
 	iamClient := iam.New(sess)
+
+	slackWebhookURL, err := ssm.DecryptValue(sess, options.SSMSlackWebhookURL)
+	if err != nil {
+		logger.Fatal("failed to decrypt slackWebhookURL", zap.Error(err))
+	}
 
 	report, err := getCredentialReport(iamClient, 5, int(options.PollInterval))
 	if err != nil {
@@ -257,7 +241,7 @@ func main() {
 	}
 
 	if options.Lambda {
-		logger.Info("Running Lambda handler.")
+		logger.Info("running Lambda handler.")
 		lambdaHandler()
 	} else {
 		triggerCheck()
