@@ -25,18 +25,24 @@ go get -u github.com/trussworks/truss-aws-tools/...
 ``` shell
 brew install dep
 brew install pre-commit
+pre-commit install
 go get -u github.com/alecthomas/gometalinter
 gometalinter --install
 ```
+
+Then run `./bin/prereqs` and follow any instructions that appear.
 
 ### Install dependencies (Linux)
 
 ``` shell
 go get -u github.com/golang/dep/cmd/dep
 pip install pre-commit
+pre-commit install
 go get -u github.com/alecthomas/gometalinter
 gometalinter --install
 ```
+
+Then run `./bin/prereqs` and follow any instructions that appear.
 
 ### Build Local Binaries
 

@@ -6,18 +6,28 @@ prereqs_found=true
 
 function has() {
     local tool=$1
-    if [[ ! -z $(type -p "${tool}") ]]; then
+    local tool_install_direction=$2
+    if [[ -n $(type -p "${tool}") ]]; then
         echo "${tool} installed."
     else
-        echo "WARNING: ${tool} not found."
+        echo "WARNING: ${tool} not found, install via: ${tool_install_direction}"
         prereqs_found=false
     fi
 }
 
-has dep
-has pre-commit
-has gometalinter
-has shellcheck
+
+# macOS only
+if [[ $(uname -s) = Darwin ]]; then
+    has dep "brew install dep"
+    has pre-commit "brew install pre-commit"
+    has gometalinter "go get -u github.com/alecthomas/gometalinter"
+    has shellcheck "brew install shellcheck"
+else
+    has dep "go get -u github.com/golang/dep/cmd/dep"
+    has pre-commit "pip install pre-commit"
+    has gometalinter "go get -u github.com/alecthomas/gometalinter"
+    has shellcheck "apt-get install shellcheck"
+fi
 
 if [[ $prereqs_found == "true" ]]; then
     echo "OK: all prereqs found"
