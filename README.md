@@ -29,6 +29,8 @@ go get -u github.com/alecthomas/gometalinter
 gometalinter --install
 ```
 
+Then run `./bin/prereqs` and follow any instructions that appear.
+
 ### Install dependencies (Linux)
 
 ``` shell
@@ -37,6 +39,8 @@ pip install pre-commit
 go get -u github.com/alecthomas/gometalinter
 gometalinter --install
 ```
+
+Then run `./bin/prereqs` and follow any instructions that appear.
 
 ### Build Local Binaries
 
