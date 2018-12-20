@@ -1,7 +1,12 @@
 SHELL = /bin/sh
-VERSION = 2.4
+VERSION = 2.5
 
 all: install
+
+go_version: .go_version.stamp
+.go_version.stamp: bin/check_go_version
+	bin/check_go_version
+	touch .go_version.stamp
 
 lambda_build: dep pre-commit-install test
 	bin/make-lambda-build
@@ -18,7 +23,7 @@ test: dep pre-commit
 pre-commit: pre-commit-install
 	pre-commit run --all-files
 
-dep: .dep.stamp
+dep: go_version .dep.stamp
 
 .dep.stamp: Gopkg.lock .prereqs.stamp
 	bin/make-dep
@@ -41,4 +46,4 @@ prereqs: .prereqs.stamp
 clean:
 	rm -f .*.stamp *.zip
 
-.PHONY: clean dep all test pre-commit pre-commit-install prereqs
+.PHONY: clean go_version dep all test pre-commit pre-commit-install prereqs

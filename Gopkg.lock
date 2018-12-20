@@ -2,7 +2,7 @@
 
 
 [[projects]]
-  digest = "1:8b55da6790eeade578c1fd4ebaa5b0e641072172e1d743f3cb945ae73af463f9"
+  digest = "1:75b6e611eafd029c4a94ec38c9fb44b93fecae2d6c9d7a3db9826333f630cb22"
   name = "github.com/aws/aws-lambda-go"
   packages = [
     "events",
@@ -11,11 +11,11 @@
     "lambdacontext",
   ]
   pruneopts = ""
-  revision = "2d482ef09017ae953b1e8d5a6ddac5b696663a3c"
-  version = "v1.6.0"
+  revision = "9e3676ee8ca83aee500682f382e10b9d03660093"
+  version = "v1.8.0"
 
 [[projects]]
-  digest = "1:4a54b6f95f4f0bbbcb80ead2435a113ab0e2bda09c6e652e3ad864ccc7777714"
+  digest = "1:3b5b071385b34dc7d78a5a1e475b9b2baeda88ad500f13a2975ca3e683bd0b2b"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -27,6 +27,7 @@
     "aws/credentials",
     "aws/credentials/ec2rolecreds",
     "aws/credentials/endpointcreds",
+    "aws/credentials/processcreds",
     "aws/credentials/stscreds",
     "aws/csm",
     "aws/defaults",
@@ -35,6 +36,7 @@
     "aws/request",
     "aws/session",
     "aws/signer/v4",
+    "internal/ini",
     "internal/s3err",
     "internal/sdkio",
     "internal/sdkrand",
@@ -62,16 +64,8 @@
     "service/support",
   ]
   pruneopts = ""
-  revision = "c35fe9d06b9f0cefe538ecdb7501c84603119dfb"
-  version = "v1.15.56"
-
-[[projects]]
-  digest = "1:0deddd908b6b4b768cfc272c16ee61e7088a60f7fe2f06c547bd3d8e1f8b8e77"
-  name = "github.com/davecgh/go-spew"
-  packages = ["spew"]
-  pruneopts = ""
-  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
-  version = "v1.1.1"
+  revision = "a21788f1964e28dc1e3932e595db6707ce8070cf"
+  version = "v1.16.7"
 
 [[projects]]
   branch = "master"
@@ -82,14 +76,6 @@
   revision = "c2bae568a25431c6c82170dd18361a478bd1f1b5"
 
 [[projects]]
-  digest = "1:736253aac975cfc002b3c74034b8ff6becac84ed92e91b6147f6703834b890cc"
-  name = "github.com/go-ini/ini"
-  packages = ["."]
-  pruneopts = ""
-  revision = "9c8236e659b76e87bf02044d06fde8683008ff3e"
-  version = "v1.39.0"
-
-[[projects]]
   digest = "1:ca5c90960520407749b98c49650f54f5f90a667796e85c5ee1597478f702fb91"
   name = "github.com/jessevdk/go-flags"
   packages = ["."]
@@ -98,11 +84,11 @@
   version = "v1.4.0"
 
 [[projects]]
-  digest = "1:6f49eae0c1e5dab1dafafee34b207aeb7a42303105960944828c2079b92fc88e"
+  digest = "1:13fe471d0ed891e8544eddfeeb0471fd3c9f2015609a1c000aefdedf52a19d40"
   name = "github.com/jmespath/go-jmespath"
   packages = ["."]
   pruneopts = ""
-  revision = "0b12d6b5"
+  revision = "c2b33e84"
 
 [[projects]]
   branch = "master"
@@ -131,22 +117,6 @@
   pruneopts = ""
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
-
-[[projects]]
-  digest = "1:256484dbbcd271f9ecebc6795b2df8cad4c458dd0f5fd82a8c2fa0c29f233411"
-  name = "github.com/pmezard/go-difflib"
-  packages = ["difflib"]
-  pruneopts = ""
-  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
-  version = "v1.0.0"
-
-[[projects]]
-  digest = "1:c587772fb8ad29ad4db67575dad25ba17a51f072ff18a22b4f0257a4d9c24f75"
-  name = "github.com/stretchr/testify"
-  packages = ["assert"]
-  pruneopts = ""
-  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
-  version = "v1.2.2"
 
 [[projects]]
   digest = "1:74f86c458e82e1c4efbab95233e0cf51b7cc02dc03193be9f62cd81224e10401"
@@ -201,7 +171,6 @@
     "github.com/jstemmer/go-junit-report",
     "github.com/lytics/slackhook",
     "github.com/pkg/errors",
-    "github.com/stretchr/testify/assert",
     "go.uber.org/zap",
   ]
   solver-name = "gps-cdcl"
