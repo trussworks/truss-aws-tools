@@ -41,6 +41,10 @@ func sendNotification(event events.CloudWatchEvent) {
 		logger.Fatal("failed to decrypt slackWebhookURL", zap.Error(err))
 	}
 	slack := slackhook.New(slackWebhookURL)
+	description := "no description found in health check"
+	if len(health.Description) > 0 {
+		description = health.Description[0].Latest
+	}
 
 	attachment := slackhook.Attachment{
 		Title:     "AWS Health Notification",
@@ -53,7 +57,7 @@ func sendNotification(event events.CloudWatchEvent) {
 			},
 			{
 				Title: "Description",
-				Value: health.Description[0].Latest,
+				Value: description,
 			},
 			{
 				Title: "EventTypeCode",
