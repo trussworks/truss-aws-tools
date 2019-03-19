@@ -149,6 +149,30 @@
   revision = "ff33455a0e382e8a81d14dd7c922020b6b5e7982"
   version = "v1.9.1"
 
+[[projects]]
+  branch = "master"
+  digest = "1:904a96f1b41dd718461284637f0c164a9cdc47aaf3026406de6cc139e19411b5"
+  name = "golang.org/x/lint"
+  packages = [
+    ".",
+    "golint",
+  ]
+  pruneopts = ""
+  revision = "d0100b6bd8b389f0385611eb39152c4d7c3a7905"
+
+[[projects]]
+  branch = "master"
+  digest = "1:372297ff900eedd8a2d7882a4e0709c2c4470cda8eb1ef560579869c53dbaa6b"
+  name = "golang.org/x/tools"
+  packages = [
+    "go/ast/astutil",
+    "go/gcexportdata",
+    "go/internal/gcimporter",
+    "go/types/typeutil",
+  ]
+  pruneopts = ""
+  revision = "bb1270c20edf080f9f069ea11a1fe5c2b0ebd62c"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
@@ -172,6 +196,7 @@
     "github.com/lytics/slackhook",
     "github.com/pkg/errors",
     "go.uber.org/zap",
+    "golang.org/x/lint/golint",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

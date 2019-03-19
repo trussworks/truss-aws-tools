@@ -13,8 +13,8 @@ repos:
   - repo: git://github.com/dnephin/pre-commit-golang
     sha: v0.2
     hooks:
+      - id: go-lint
       - id: go-fmt
-      - id: gometalinter
   - repo: git://github.com/igorshubovych/markdownlint-cli
     sha: v0.5.0
     hooks:

@@ -3,3 +3,4 @@
 dep ensure -vendor-only
 go build -i -o bin/go-junit-formatter \
    ./vendor/github.com/jstemmer/go-junit-report
+go install ./vendor/golang.org/x/lint/golint # golint needs to be accessible for the pre-commit task to run, so `install` it
