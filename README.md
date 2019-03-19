@@ -56,6 +56,12 @@ To build a zip for AWS Lambda to execute, run the following
 make S3_BUCKET=your-s3-bucket lambda_release
 ```
 
+If you need to use `aws-vault` then the way to do this is:
+
+```shell
+AWS_VAULT_KEYCHAIN_NAME=login aws-vault exec $AWS_PROFILE -- make S3_BUCKET=your-s3-bucket lambda_release
+```
+
 ## Tools wanted
 
 * s3 deletion tool that purges a key AND all versions of that key.
