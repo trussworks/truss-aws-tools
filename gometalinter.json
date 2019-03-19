@@ -1,5 +1,6 @@
 {
   "aggregate": true,
+  "deadline": "90s",
   "disable": [
     "gocyclo",
     "gosec",
