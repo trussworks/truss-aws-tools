@@ -99,67 +99,54 @@ func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Im
 	return ImagesToPurge
 }
 
-// GetIdsToProcess takes a slice of ec2.Image objects and pulls out the AMI IDs
-// and snapshot IDs so that we can get rid of them later.
-func (a *AMIClean) GetIdsToProcess(images []*ec2.Image) ([]string, []string) {
-	var amiIds, snapshotIds []string
+// PurgeImages takes a slice of ec2.Image objects and processes them in turn,
+// deregistering their AMI ID and then deleting their snapshot IDs. We want to
+// do this image by image because if we have an error, we don't want a ton of
+// orphaned snapshots lying around.
+func (a *AMIClean) PurgeImages(images []*ec2.Image) error {
 	for _, image := images {
 		amiId := *image.ImageId
-		amiIds = append(amiIds, amiId)
+		// There may be multiple snapshots attached to a single AMI,
+		// so we need to build a list and iterate on them.
+		var snapshotIds []*string
 		for _, blockDevice := range image.BlockDeviceMappings {
 			snapshotId := *blockDevice.Ebs.SnapshotId
 			snapshotIds = append(snapshotIds, snapshotId)
 		}
-	}
-	return amiIds, snapshotIds
-}
-
-// DeregisterImageList takes a slice of AMI IDs (as strings) and runs the
-// deregister operation on each one. This effectively "deletes" the AMI from
-// AWS, but we also have to clean up the snapshots.
-func (a *AMIClean) DeregisterImageList(imageList []string) error {
-	for _, amiId := range imageList {
 		deregisterInput := &ec2.DeregisterImageInput{
-			DryRun: aws.Bool(a.DryRun),
+			DryRun: aws.Bool(a.Dryrun),
 			ImageId: aws.String(amiId),
 		}
 		if a.DryRun {
 			a.Logger.Info("would deregister ami",
-				zap.String("ami-id", amiId)
+				zap.String("ami-id", amiId),
 			)
 		} else {
 			a.Logger.Info("deregistering ami",
-				zap.String("ami-id", amiId)
+				zap.String("ami-id", amiId),
 			)
-			output, err := a.EC2Client.DeregisterImage(deregisterInput)
+			_, err := a.EC2Client.DeregisterImage(deregister(input)
 			if err != nil {
 				return err
 			}
 		}
-	}
-	return nil
-}
-
-// DeleteSnapshotList works mostly the same as DeregisterImageList, only it is
-// deleting the snapshots that were linked to the AMIs, taking care of the last
-// step to remove these AMIs.
-func (a *AMIClean) DeleteSnapshotList(snapshotList []string) error {
-	for _, snapshotId := range snapshotList {
-		deleteInput := &ec2.DeleteSnapshotInput{
-			DryRun: aws.Bool(a.DryRun),
-			SnapshotId: aws.String(snapshotId),
-		}
-		if a.DryRun {
-			a.Logger.Info("would delete snapshot",
-				zap.String("snapshot-id", snapshotId)
-			)
-		} else {
-			a.Logger.Info("deleting snapshot",
-				zap.String("snapshot-id", snapshotId)
-			)
-			output, err := a.EC2Client.DeleteSnapshot(deleteInput)
-			if err != nil {
-				return err
+		for _, snapshot := range snapshotIds {
+			deleteInput := &ec2.DeleteSnapshotInput{
+				DryRun: aws.Bool(a.DryRun),
+				SnapshotId: aws.String(snapshot),
+			}
+			if a.DryRun {
+				a.Logger.Info("would delete snapshot",
+					zap.String("snapshot-id", snapshotId),
+				)
+			} else {
+				a.Logger.Info("deleting snapshot",
+					zap.String("snapshot-id", snapshotId),
+				)
+				_, err := a.EC2Client.DeleteSnapshot(deleteInput)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}

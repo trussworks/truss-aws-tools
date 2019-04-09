@@ -55,18 +55,9 @@ func cleanImages() {
 
 	purgeList := a.FindImagesToPurge(availableImages)
 
-	amiIdsToPurge, snapshotIdsToPurge := a.GetIdsToProcess(purgeList)
-
-	err = a.DeregisterImageList(amiIdsToPurge)
+	err = a.PurgeImages(purgeList)
 	if err != nil {
-		logger.Fatal("unable to deregister AMIs",
-			zap.Error(err)
-		)
-	}
-
-	err = a.DeleteSnapshotList(snapshotIdsToPurge)
-	if err != nil {
-		logger.Fatal("unable to delete snapshots",
+		logger.Fatal("unable to complete image purge",
 			zap.Error(err)
 		)
 	}
