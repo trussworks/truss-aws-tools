@@ -7,6 +7,7 @@ import (
 
     "fmt"
     "time"
+    //"errors"
 )
 
 const (
@@ -34,6 +35,8 @@ func FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Image {
     return ImagesToPurge
 }
 
+// This function takes a slice of Images, and then finds the AMI IDs and
+// snapshot IDs associated with them.
 func GetIdsForProcessing(images []*ec2.Image) ([]string, []string) {
 	var amiIds, snapshotIds []string
 	for _, image := range images {
@@ -46,6 +49,45 @@ func GetIdsForProcessing(images []*ec2.Image) ([]string, []string) {
 	}
 	return amiIds, snapshotIds
 }
+
+// This function takes a list of AMI IDs (as strings) and runs the deregister
+// operation on each one.
+func deregisterImageList(ec2conn *ec2.EC2, imageList []string) error {
+	for _, amiId := range imageList {
+		deregisterInput := &ec2.DeregisterImageInput{
+			DryRun: aws.Bool(true),
+			ImageId: aws.String(amiId),
+		}
+		fmt.Println("Attempting to deregister", amiId)
+		output, err := ec2conn.DeregisterImage(deregisterInput)
+		fmt.Println(output)
+		if err != nil {
+			fmt.Println(err)
+			// return err
+		}
+	}
+	return nil
+}
+
+// This function takes a list of snapshot IDs (as strings) and runs the
+// delete operation on each one.
+func deleteSnapshotList(ec2conn *ec2.EC2, snapshotList []string) error {
+	for _, snapshotId := range snapshotList {
+		deleteInput := &ec2.DeleteSnapshotInput{
+			DryRun: aws.Bool(true),
+			SnapshotId: aws.String(snapshotId),
+		}
+		fmt.Println("Attempting to delete", snapshotId)
+		output, err := ec2conn.DeleteSnapshot(deleteInput)
+		fmt.Println(output)
+		if err != nil {
+			fmt.Println(err)
+			// return err
+		}
+	}
+	return nil
+}
+
 
 func main() {
     // This creates "sess", which is essentially a collection of credentials,
@@ -94,6 +136,11 @@ func main() {
     // (they need to be deleted after we deregister the AMI).
     amiIds, snapshotIds := GetIdsForProcessing(purgelist)
 
-    fmt.Println(amiIds)
-    fmt.Println(snapshotIds)
+    // Now we have a list of AMIs and snapshots to get deleted; we need to
+    // deregister AMIs first, then delete the snapshots.
+    deregisterImageList(ec2Svc, amiIds)
+
+    // And now that the AMIs have been registered, we can delete the snapshots.
+    deleteSnapshotList(ec2Svc, snapshotIds)
+
 }
