@@ -15,12 +15,12 @@ import (
 
 // The Options struct describes the command line options available.
 type Options struct {
-	DryRun bool `short:"n" long:"dryrun" description:"Run in dryrun mode (ie, do not actually purge AMIs)."`
-	RetentionDays int `long:"days" default:"30" description:"Age of AMI in days before it is a candidate for removal."`
-	Branch string `short:"b" long:"branch" description:"Branch to purge.  Preface with ! to purge all branches *but* this one (eg, !master would purge all AMIs not from the master branch)."`
-	Profile string `short:"p" long:"profile" env:"PROFILE" required:"false" description:"The AWS profile to use."`
-	Region string `short:"r" long:"region" env:"REGION" required:"false" description:"The AWS region to use."`
-	Lambda bool `long:"lambda" description:"Run as an AWS Lambda function." required:"false" env:"LAMBDA"`
+	DryRun        bool   `short:"n" long:"dryrun" description:"Run in dryrun mode (ie, do not actually purge AMIs)."`
+	RetentionDays int    `long:"days" default:"30" description:"Age of AMI in days before it is a candidate for removal."`
+	Branch        string `short:"b" long:"branch" description:"Branch to purge.  Preface with ! to purge all branches *but* this one (eg, !master would purge all AMIs not from the master branch)."`
+	Profile       string `short:"p" long:"profile" env:"PROFILE" required:"false" description:"The AWS profile to use."`
+	Region        string `short:"r" long:"region" env:"REGION" required:"false" description:"The AWS region to use."`
+	Lambda        bool   `long:"lambda" description:"Run as an AWS Lambda function." required:"false" env:"LAMBDA"`
 }
 
 var options Options
@@ -36,11 +36,11 @@ func makeEC2Client(region, profile string) *ec2.EC2 {
 func cleanImages() {
 	now := time.Now().UTC()
 	a := amiclean.AMIClean{
-		Branch: options.Branch,
-		DryRun: options.DryRun,
+		Branch:         options.Branch,
+		DryRun:         options.DryRun,
 		ExpirationDate: now.AddDate(0, 0, -int(options.RetentionDays)),
-		Logger: logger,
-		EC2Client: makeEC2Client(options.Region, options.Profile),
+		Logger:         logger,
+		EC2Client:      makeEC2Client(options.Region, options.Profile),
 	}
 
 	availableImages, err := a.GetImages()

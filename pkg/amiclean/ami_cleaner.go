@@ -1,8 +1,8 @@
 package amiclean
 
 import (
-	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"go.uber.org/zap"
 
 	"strings"
@@ -68,11 +68,11 @@ func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Im
 					if *tag.Key == "Branch" && *tag.Value != branchname {
 						a.Logger.Info("selected ami for purging",
 							zap.String("ami-id",
-							*image.ImageId),
+								*image.ImageId),
 							zap.String("ami-branch-tag",
-							*tag.Value),
+								*tag.Value),
 							zap.String("ami-creation-date",
-							imageCreationTime.String()),
+								imageCreationTime.String()),
 						)
 						ImagesToPurge =
 							append(ImagesToPurge, image)
@@ -84,11 +84,11 @@ func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Im
 					if *tag.Key == "Branch" && *tag.Value == a.Branch {
 						a.Logger.Info("selected ami for purging",
 							zap.String("ami-id",
-							*image.ImageId),
+								*image.ImageId),
 							zap.String("ami-branch-tag",
-							*tag.Value),
+								*tag.Value),
 							zap.String("ami-creation-date",
-							imageCreationTime.String()),
+								imageCreationTime.String()),
 						)
 						ImagesToPurge =
 							append(ImagesToPurge, image)
@@ -114,7 +114,7 @@ func (a *AMIClean) PurgeImages(images []*ec2.Image) error {
 			snapshotIds = append(snapshotIds, &snapshotId)
 		}
 		deregisterInput := &ec2.DeregisterImageInput{
-			DryRun: aws.Bool(a.DryRun),
+			DryRun:  aws.Bool(a.DryRun),
 			ImageId: aws.String(*image.ImageId),
 		}
 		if a.DryRun {
@@ -132,7 +132,7 @@ func (a *AMIClean) PurgeImages(images []*ec2.Image) error {
 		}
 		for _, snapshot := range snapshotIds {
 			deleteInput := &ec2.DeleteSnapshotInput{
-				DryRun: aws.Bool(a.DryRun),
+				DryRun:     aws.Bool(a.DryRun),
 				SnapshotId: aws.String(*snapshot),
 			}
 			if a.DryRun {
