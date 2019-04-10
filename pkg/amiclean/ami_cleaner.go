@@ -2,7 +2,7 @@ package amiclean
 
 import (
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
 	"strings"
@@ -56,38 +56,39 @@ func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Im
 	var ImagesToPurge []*ec2.Image
 	for _, image := range output.Images {
 		ct := *image.CreationDate
+		amiId := *image.ImageId
 		imageCreationTime, _ := time.Parse(RFC8601, ct)
-		if imageCreationTime.After(ExpirationDate) {
+		if imageCreationTime.After(a.ExpirationDate) {
 			continue
 		} else {
-			if strings.Prefix(a.Branch, "!") {
+			if strings.HasPrefix(a.Branch, "!") {
 				branchname := a.Branch[1:]
+				a.Logger.Info("Entering NOT branch mode", zap.String("branchname", branchname))
 				for _, tag := range image.Tags {
 					if *tag.Key == "Branch" && *tag.Value != branchname {
-						a.Logger.Info("selected ami for
-						purging",
+						a.Logger.Info("selected ami for purging",
 							zap.String("ami-id",
-							image.ImageId),
+							amiId),
 							zap.String("ami-branch-tag",
 							branchname),
 							zap.String("ami-creation-date",
-							imageCreationTime),
+							imageCreationTime.String()),
 						)
 						ImagesToPurge =
 							append(ImagesToPurge, image)
 					}
 				}
 			} else {
+				a.Logger.Info("Entering branch mode", zap.String("branchname", a.Branch))
 				for _, tag := range image.Tags {
 					if *tag.Key == "Branch" && *tag.Value == a.Branch {
-						a.Logger.Info("selected ami for
-						purging",
+						a.Logger.Info("selected ami for purging",
 							zap.String("ami-id",
-							image.ImageId),
+							amiId),
 							zap.String("ami-branch-tag",
 							a.Branch),
 							zap.String("ami-creation-date",
-							imageCreationTime),
+							imageCreationTime.String()),
 						)
 						ImagesToPurge =
 							append(ImagesToPurge, image)
@@ -104,17 +105,17 @@ func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Im
 // do this image by image because if we have an error, we don't want a ton of
 // orphaned snapshots lying around.
 func (a *AMIClean) PurgeImages(images []*ec2.Image) error {
-	for _, image := images {
+	for _, image := range images {
 		amiId := *image.ImageId
 		// There may be multiple snapshots attached to a single AMI,
 		// so we need to build a list and iterate on them.
 		var snapshotIds []*string
 		for _, blockDevice := range image.BlockDeviceMappings {
 			snapshotId := *blockDevice.Ebs.SnapshotId
-			snapshotIds = append(snapshotIds, snapshotId)
+			snapshotIds = append(snapshotIds, &snapshotId)
 		}
 		deregisterInput := &ec2.DeregisterImageInput{
-			DryRun: aws.Bool(a.Dryrun),
+			DryRun: aws.Bool(a.DryRun),
 			ImageId: aws.String(amiId),
 		}
 		if a.DryRun {
@@ -125,7 +126,7 @@ func (a *AMIClean) PurgeImages(images []*ec2.Image) error {
 			a.Logger.Info("deregistering ami",
 				zap.String("ami-id", amiId),
 			)
-			_, err := a.EC2Client.DeregisterImage(deregister(input)
+			_, err := a.EC2Client.DeregisterImage(deregisterInput)
 			if err != nil {
 				return err
 			}
@@ -133,15 +134,15 @@ func (a *AMIClean) PurgeImages(images []*ec2.Image) error {
 		for _, snapshot := range snapshotIds {
 			deleteInput := &ec2.DeleteSnapshotInput{
 				DryRun: aws.Bool(a.DryRun),
-				SnapshotId: aws.String(snapshot),
+				SnapshotId: aws.String(*snapshot),
 			}
 			if a.DryRun {
 				a.Logger.Info("would delete snapshot",
-					zap.String("snapshot-id", snapshotId),
+					zap.String("snapshot-id", *deleteInput.SnapshotId),
 				)
 			} else {
 				a.Logger.Info("deleting snapshot",
-					zap.String("snapshot-id", snapshotId),
+					zap.String("snapshot-id", *deleteInput.SnapshotId),
 				)
 				_, err := a.EC2Client.DeleteSnapshot(deleteInput)
 				if err != nil {

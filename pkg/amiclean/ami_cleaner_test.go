@@ -17,7 +17,10 @@ import (
 //   - one must have multiple EBS volumes
 
 var newMasterImage = &ec2.Image{
+	Description:
 	ImageId: "ami-11111111111111111"
+	CreationDate:
+	Tags:
 }
 
 var newishDevImage = &ec2.Image{

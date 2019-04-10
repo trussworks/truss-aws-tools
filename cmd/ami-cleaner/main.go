@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/trussworks/truss-aws-tools/internal/aws/session"
-	"github.com/trussworks/truss-aws-tools/amiclean"
+	"github.com/trussworks/truss-aws-tools/pkg/amiclean"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	flag "github.com/jessevdk/go-flags"
 	"go.uber.org/zap"
@@ -13,17 +13,11 @@ import (
 
 // The Options struct describes the command line options available.
 type Options struct {
-	DryRun bool `short:"n" long:"dryrun" description:"Run in dryrun mode
-	(ie, do not actually purge AMIs)."`
-	RetentionDays int `long:"days" default:"30" description:"Age of AMI in
-	days before it is a candidate for removal."`
-	Branch string `short:"b" long:"branch" description:"Branch to purge.
-	Preface with ! to purge all branches *but* this one (eg, !master would
-	purge all AMIs not from the master branch)."`
-	Profile string `short:"p" long:"profile" env:"PROFILE" required:"false"
-	description:"The AWS profile to use."`
-	Region string `short:"r" long:"region" env:"REGION" required:"false"
-	description:"The AWS region to use."`
+	DryRun bool `short:"n" long:"dryrun" description:"Run in dryrun mode (ie, do not actually purge AMIs)."`
+	RetentionDays int `long:"days" default:"30" description:"Age of AMI in days before it is a candidate for removal."`
+	Branch string `short:"b" long:"branch" description:"Branch to purge.  Preface with ! to purge all branches *but* this one (eg, !master would purge all AMIs not from the master branch)."`
+	Profile string `short:"p" long:"profile" env:"PROFILE" required:"false" description:"The AWS profile to use."`
+	Region string `short:"r" long:"region" env:"REGION" required:"false" description:"The AWS region to use."`
 }
 
 var options Options
@@ -37,7 +31,7 @@ func makeEC2Client(region, profile string) *ec2.EC2 {
 }
 
 func cleanImages() {
-	now := Time.Now().UTC()
+	now := time.Now().UTC()
 	a := amiclean.AMIClean{
 		Branch: options.Branch,
 		DryRun: options.DryRun,
@@ -49,7 +43,7 @@ func cleanImages() {
 	availableImages, err := a.GetImages()
 	if err != nil {
 		logger.Fatal("unable to get list of available images",
-			zap.Error(err)
+			zap.Error(err),
 		)
 	}
 
@@ -58,7 +52,7 @@ func cleanImages() {
 	err = a.PurgeImages(purgeList)
 	if err != nil {
 		logger.Fatal("unable to complete image purge",
-			zap.Error(err)
+			zap.Error(err),
 		)
 	}
 
