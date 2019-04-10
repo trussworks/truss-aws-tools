@@ -110,8 +110,8 @@ func (a *AMIClean) PurgeImages(images []*ec2.Image) error {
 		// so we need to build a list and iterate on them.
 		var snapshotIds []*string
 		for _, blockDevice := range image.BlockDeviceMappings {
-			snapshotId := *blockDevice.Ebs.SnapshotId
-			snapshotIds = append(snapshotIds, &snapshotId)
+			snapshotID := *blockDevice.Ebs.SnapshotId
+			snapshotIds = append(snapshotIds, &snapshotID)
 		}
 		deregisterInput := &ec2.DeregisterImageInput{
 			DryRun:  aws.Bool(a.DryRun),
