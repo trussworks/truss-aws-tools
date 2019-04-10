@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/trussworks/truss-aws-tools/internal/aws/session"
 	"github.com/trussworks/truss-aws-tools/pkg/amiclean"
+
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	flag "github.com/jessevdk/go-flags"
 	"go.uber.org/zap"
@@ -18,6 +20,7 @@ type Options struct {
 	Branch string `short:"b" long:"branch" description:"Branch to purge.  Preface with ! to purge all branches *but* this one (eg, !master would purge all AMIs not from the master branch)."`
 	Profile string `short:"p" long:"profile" env:"PROFILE" required:"false" description:"The AWS profile to use."`
 	Region string `short:"r" long:"region" env:"REGION" required:"false" description:"The AWS region to use."`
+	Lambda bool `long:"lambda" description:"Run as an AWS Lambda function." required:"false" env:"LAMBDA"`
 }
 
 var options Options
@@ -58,6 +61,10 @@ func cleanImages() {
 
 }
 
+func lambdaHandler() {
+	lambda.Start(cleanImages)
+}
+
 func main() {
 	// First, parse out our command line options:
 	parser := flag.NewParser(&options, flag.Default)
@@ -72,7 +79,12 @@ func main() {
 		log.Fatalf("can't initialize zap logger: %v", err)
 	}
 
-	// And now we just call cleanImages to actually do the work.
-	cleanImages()
+	// We need to check to see if we were called as a Lambda function.
+	if options.Lambda {
+		logger.Info("Running Lambda handler.")
+		lambdaHandler()
+	} else {
+		cleanImages()
+	}
 
 }
