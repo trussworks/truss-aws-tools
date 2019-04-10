@@ -11,7 +11,7 @@ import (
 
 const (
 	// RFC8601 is the date/time format used by AWS.
-	RFC8601 = "2006-01-02T15:04:05-07:00"
+	RFC8601 = "2006-01-02T15:04:05.000Z"
 )
 
 // AMIClean defines parameters for cleaning up AMIs based on the Branch and
@@ -55,22 +55,22 @@ func (a *AMIClean) GetImages() (*ec2.DescribeImagesOutput, error) {
 func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Image {
 	var ImagesToPurge []*ec2.Image
 	for _, image := range output.Images {
-		ct := *image.CreationDate
-		amiId := *image.ImageId
-		imageCreationTime, _ := time.Parse(RFC8601, ct)
+		a.Logger.Info("raw image creation date", zap.String("time", *image.CreationDate))
+		//ct := *image.CreationDate
+		imageCreationTime, _ := time.Parse(RFC8601, *image.CreationDate)
+		a.Logger.Info("parsed image creation date", zap.String("time", imageCreationTime.String()))
 		if imageCreationTime.After(a.ExpirationDate) {
 			continue
 		} else {
 			if strings.HasPrefix(a.Branch, "!") {
 				branchname := a.Branch[1:]
-				a.Logger.Info("Entering NOT branch mode", zap.String("branchname", branchname))
 				for _, tag := range image.Tags {
 					if *tag.Key == "Branch" && *tag.Value != branchname {
 						a.Logger.Info("selected ami for purging",
 							zap.String("ami-id",
-							amiId),
+							*image.ImageId),
 							zap.String("ami-branch-tag",
-							branchname),
+							*tag.Value),
 							zap.String("ami-creation-date",
 							imageCreationTime.String()),
 						)
@@ -84,9 +84,9 @@ func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Im
 					if *tag.Key == "Branch" && *tag.Value == a.Branch {
 						a.Logger.Info("selected ami for purging",
 							zap.String("ami-id",
-							amiId),
+							*image.ImageId),
 							zap.String("ami-branch-tag",
-							a.Branch),
+							*tag.Value),
 							zap.String("ami-creation-date",
 							imageCreationTime.String()),
 						)
@@ -106,7 +106,6 @@ func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Im
 // orphaned snapshots lying around.
 func (a *AMIClean) PurgeImages(images []*ec2.Image) error {
 	for _, image := range images {
-		amiId := *image.ImageId
 		// There may be multiple snapshots attached to a single AMI,
 		// so we need to build a list and iterate on them.
 		var snapshotIds []*string
@@ -116,15 +115,15 @@ func (a *AMIClean) PurgeImages(images []*ec2.Image) error {
 		}
 		deregisterInput := &ec2.DeregisterImageInput{
 			DryRun: aws.Bool(a.DryRun),
-			ImageId: aws.String(amiId),
+			ImageId: aws.String(*image.ImageId),
 		}
 		if a.DryRun {
 			a.Logger.Info("would deregister ami",
-				zap.String("ami-id", amiId),
+				zap.String("ami-id", *image.ImageId),
 			)
 		} else {
 			a.Logger.Info("deregistering ami",
-				zap.String("ami-id", amiId),
+				zap.String("ami-id", *image.ImageId),
 			)
 			_, err := a.EC2Client.DeregisterImage(deregisterInput)
 			if err != nil {
