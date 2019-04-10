@@ -82,7 +82,7 @@ func TestFindImagesToPurge(t *testing.T) {
 		RetentionDays int
 		resultSet []*ec2.Image
 	}{
-		{ testImages, "master", 1, []*ec2.Image{} },
+		{ testImages, "master", 1, []*ec2.Image(nil) },
 		{ testImages, "development", 30, []*ec2.Image{ oldDevImage } },
 		{ testImages, "development", 1, []*ec2.Image{ newishDevImage, oldDevImage } },
 		{ testImages, "!master", 1, []*ec2.Image{ newishDevImage, oldDevImage } },
