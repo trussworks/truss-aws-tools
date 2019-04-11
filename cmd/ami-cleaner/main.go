@@ -17,7 +17,7 @@ import (
 type Options struct {
 	Delete        bool   `short:"D" long:"delete" description:"Actually purge AMIs (runs in dryrun mode by default)."`
 	RetentionDays int    `long:"days" default:"30" description:"Age of AMI in days before it is a candidate for removal."`
-	Branch        string `short:"b" long:"branch" required:"true" description:"Branch to purge. If the the --exclude option is used, this is the branch NOT to operate on."`
+	Branch        string `short:"b" long:"branch" required:"true" description:"Branch to purge. If the the --invert option is used, this is the branch NOT to operate on."`
 	Invert        bool   `short:"i" long:"invert" description:"Operate in inverted mode -- only purge AMIs that are NOT in the branch provided."`
 	Profile       string `short:"p" long:"profile" env:"PROFILE" required:"false" description:"The AWS profile to use."`
 	Region        string `short:"r" long:"region" env:"REGION" required:"false" description:"The AWS region to use."`
