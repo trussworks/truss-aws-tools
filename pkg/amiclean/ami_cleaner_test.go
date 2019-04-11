@@ -26,6 +26,7 @@ var newMasterImage = &ec2.Image{
 			},
 		},
 	},
+	RootDeviceType: aws.String("ebs"),
 }
 
 var newishDevImage = &ec2.Image{
@@ -50,6 +51,7 @@ var newishDevImage = &ec2.Image{
 			},
 		},
 	},
+	RootDeviceType: aws.String("ebs"),
 }
 
 var oldDevImage = &ec2.Image{
@@ -68,14 +70,27 @@ var oldDevImage = &ec2.Image{
 			},
 		},
 	},
+	RootDeviceType: aws.String("ebs"),
 }
 
-var testImages = []*ec2.Image{newMasterImage, newishDevImage, oldDevImage}
+var noEbsImage = &ec2.Image{
+	Description:  aws.String("No EBS Image"),
+	ImageId:      aws.String("ami-44444444444444444"),
+	CreationDate: aws.String("2019-03-01T21:04:57.000Z"),
+	Tags: []*ec2.Tag{
+		&ec2.Tag{Key: aws.String("Name"), Value: aws.String("noEbsImage")},
+		&ec2.Tag{Key: aws.String("Branch"), Value: aws.String("experimental")},
+	},
+	RootDeviceType: aws.String("instance-store"),
+}
+
+var testImages = []*ec2.Image{newMasterImage, newishDevImage, oldDevImage, noEbsImage}
 
 var now = time.Date(2019, 4, 1, 0, 0, 0, 0, time.UTC)
 
+var logger, _ = zap.NewProduction()
+
 func TestFindImagesToPurge(t *testing.T) {
-	logger, _ := zap.NewProduction()
 	tables := []struct {
 		imageSet      []*ec2.Image
 		Branch        string
@@ -86,7 +101,7 @@ func TestFindImagesToPurge(t *testing.T) {
 		{testImages, "master", false, 1, []*ec2.Image(nil)},
 		{testImages, "development", false, 30, []*ec2.Image{oldDevImage}},
 		{testImages, "development", false, 1, []*ec2.Image{newishDevImage, oldDevImage}},
-		{testImages, "master", true, 1, []*ec2.Image{newishDevImage, oldDevImage}},
+		{testImages, "master", true, 1, []*ec2.Image{newishDevImage, oldDevImage, noEbsImage}},
 	}
 
 	for _, table := range tables {
@@ -108,5 +123,25 @@ func TestFindImagesToPurge(t *testing.T) {
 				table.resultSet,
 				result)
 		}
+	}
+}
+
+// Actually purging images is a little difficult to test; the function always
+// returns nil. We might want to change that so it can be tested. I am adding
+// this test to at least see the messages and know that all the logic is
+// working right.
+func TestPurgeImages(t *testing.T) {
+	a := AMIClean{
+		Branch:         "master",
+		Invert:         true,
+		Delete:         false,
+		ExpirationDate: now.AddDate(0, 0, -1),
+		Logger:         logger,
+		EC2Client:      nil,
+	}
+
+	err := a.PurgeImages(testImages)
+	if err != nil {
+		t.Errorf("ERROR: PurgeImages test failed")
 	}
 }
