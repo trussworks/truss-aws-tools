@@ -15,12 +15,13 @@ import (
 
 // The Options struct describes the command line options available.
 type Options struct {
-	DryRun        bool   `short:"n" long:"dryrun" description:"Run in dryrun mode (ie, do not actually purge AMIs)."`
+	Delete        bool   `short:"D" long:"delete" description:"Actually purge AMIs (runs in dryrun mode by default)."`
 	RetentionDays int    `long:"days" default:"30" description:"Age of AMI in days before it is a candidate for removal."`
-	Branch        string `short:"b" long:"branch" description:"Branch to purge.  Preface with ! to purge all branches *but* this one (eg, !master would purge all AMIs not from the master branch)."`
+	Branch        string `short:"b" long:"branch" required:"true" description:"Branch to purge. If the the --exclude option is used, this is the branch NOT to operate on."`
+	Invert        bool   `short:"i" long:"invert" description:"Operate in inverted mode -- only purge AMIs that are NOT in the branch provided."`
 	Profile       string `short:"p" long:"profile" env:"PROFILE" required:"false" description:"The AWS profile to use."`
 	Region        string `short:"r" long:"region" env:"REGION" required:"false" description:"The AWS region to use."`
-	Lambda        bool   `long:"lambda" description:"Run as an AWS Lambda function." required:"false" env:"LAMBDA"`
+	Lambda        bool   `long:"lambda" required:"false" env:"LAMBDA" description:"Run as an AWS Lambda function."`
 }
 
 var options Options
@@ -37,7 +38,8 @@ func cleanImages() {
 	now := time.Now().UTC()
 	a := amiclean.AMIClean{
 		Branch:         options.Branch,
-		DryRun:         options.DryRun,
+		Delete:         options.Delete,
+		Invert:         options.Invert,
 		ExpirationDate: now.AddDate(0, 0, -int(options.RetentionDays)),
 		Logger:         logger,
 		EC2Client:      makeEC2Client(options.Region, options.Profile),

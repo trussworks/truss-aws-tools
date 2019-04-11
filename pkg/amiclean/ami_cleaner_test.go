@@ -79,19 +79,21 @@ func TestFindImagesToPurge(t *testing.T) {
 	tables := []struct {
 		imageSet      []*ec2.Image
 		Branch        string
+		Invert        bool
 		RetentionDays int
 		resultSet     []*ec2.Image
 	}{
-		{testImages, "master", 1, []*ec2.Image(nil)},
-		{testImages, "development", 30, []*ec2.Image{oldDevImage}},
-		{testImages, "development", 1, []*ec2.Image{newishDevImage, oldDevImage}},
-		{testImages, "!master", 1, []*ec2.Image{newishDevImage, oldDevImage}},
+		{testImages, "master", false, 1, []*ec2.Image(nil)},
+		{testImages, "development", false, 30, []*ec2.Image{oldDevImage}},
+		{testImages, "development", false, 1, []*ec2.Image{newishDevImage, oldDevImage}},
+		{testImages, "master", true, 1, []*ec2.Image{newishDevImage, oldDevImage}},
 	}
 
 	for _, table := range tables {
 		a := AMIClean{
 			Branch:         table.Branch,
-			DryRun:         true,
+			Invert:         table.Exclude,
+			Delete:         false,
 			ExpirationDate: now.AddDate(0, 0, -int(table.RetentionDays)),
 			Logger:         logger,
 			EC2Client:      nil,

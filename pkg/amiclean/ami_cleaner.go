@@ -5,7 +5,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"go.uber.org/zap"
 
-	"strings"
 	"time"
 )
 
@@ -17,8 +16,9 @@ const (
 // AMIClean defines parameters for cleaning up AMIs based on the Branch and
 // Expiration Date.
 type AMIClean struct {
+	Delete         bool
 	Branch         string
-	DryRun         bool
+	Invert         bool
 	ExpirationDate time.Time
 	Logger         *zap.Logger
 	EC2Client      *ec2.EC2
@@ -55,17 +55,13 @@ func (a *AMIClean) GetImages() (*ec2.DescribeImagesOutput, error) {
 func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Image {
 	var ImagesToPurge []*ec2.Image
 	for _, image := range output.Images {
-		a.Logger.Info("raw image creation date", zap.String("time", *image.CreationDate))
-		//ct := *image.CreationDate
 		imageCreationTime, _ := time.Parse(RFC8601, *image.CreationDate)
-		a.Logger.Info("parsed image creation date", zap.String("time", imageCreationTime.String()))
 		if imageCreationTime.After(a.ExpirationDate) {
 			continue
 		} else {
-			if strings.HasPrefix(a.Branch, "!") {
-				branchname := a.Branch[1:]
+			if a.Invert {
 				for _, tag := range image.Tags {
-					if *tag.Key == "Branch" && *tag.Value != branchname {
+					if *tag.Key == "Branch" && *tag.Value != a.Branch {
 						a.Logger.Info("selected ami for purging",
 							zap.String("ami-id",
 								*image.ImageId),
@@ -79,7 +75,6 @@ func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Im
 					}
 				}
 			} else {
-				a.Logger.Info("Entering branch mode", zap.String("branchname", a.Branch))
 				for _, tag := range image.Tags {
 					if *tag.Key == "Branch" && *tag.Value == a.Branch {
 						a.Logger.Info("selected ami for purging",
@@ -114,14 +109,10 @@ func (a *AMIClean) PurgeImages(images []*ec2.Image) error {
 			snapshotIds = append(snapshotIds, &snapshotID)
 		}
 		deregisterInput := &ec2.DeregisterImageInput{
-			DryRun:  aws.Bool(a.DryRun),
+			DryRun:  aws.Bool(!a.Delete),
 			ImageId: aws.String(*image.ImageId),
 		}
-		if a.DryRun {
-			a.Logger.Info("would deregister ami",
-				zap.String("ami-id", *image.ImageId),
-			)
-		} else {
+		if a.Delete {
 			a.Logger.Info("deregistering ami",
 				zap.String("ami-id", *image.ImageId),
 			)
@@ -129,17 +120,17 @@ func (a *AMIClean) PurgeImages(images []*ec2.Image) error {
 			if err != nil {
 				return err
 			}
+		} else {
+			a.Logger.Info("would deregister ami",
+				zap.String("ami-id", *image.ImageId),
+			)
 		}
 		for _, snapshot := range snapshotIds {
 			deleteInput := &ec2.DeleteSnapshotInput{
-				DryRun:     aws.Bool(a.DryRun),
+				DryRun:     aws.Bool(!a.Delete),
 				SnapshotId: aws.String(*snapshot),
 			}
-			if a.DryRun {
-				a.Logger.Info("would delete snapshot",
-					zap.String("snapshot-id", *deleteInput.SnapshotId),
-				)
-			} else {
+			if a.Delete {
 				a.Logger.Info("deleting snapshot",
 					zap.String("snapshot-id", *deleteInput.SnapshotId),
 				)
@@ -147,6 +138,10 @@ func (a *AMIClean) PurgeImages(images []*ec2.Image) error {
 				if err != nil {
 					return err
 				}
+			} else {
+				a.Logger.Info("would delete snapshot",
+					zap.String("snapshot-id", *deleteInput.SnapshotId),
+				)
 			}
 		}
 	}
