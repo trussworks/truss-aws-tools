@@ -92,7 +92,7 @@ func TestFindImagesToPurge(t *testing.T) {
 	for _, table := range tables {
 		a := AMIClean{
 			Branch:         table.Branch,
-			Invert:         table.Exclude,
+			Invert:         table.Invert,
 			Delete:         false,
 			ExpirationDate: now.AddDate(0, 0, -int(table.RetentionDays)),
 			Logger:         logger,
