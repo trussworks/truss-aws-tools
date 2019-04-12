@@ -46,7 +46,7 @@ func (a *AMIClean) GetImages() (*ec2.DescribeImagesOutput, error) {
 		return nil, err
 	}
 
-	return output, err
+	return output, nil
 }
 
 // TODO: Need a generic function that will find the value of a given tag key
