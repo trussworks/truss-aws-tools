@@ -11,6 +11,7 @@ import (
 )
 
 var newMasterImage = &ec2.Image{
+	Name:         aws.String("masterimage-alpha"),
 	Description:  aws.String("New Master Image"),
 	ImageId:      aws.String("ami-11111111111111111"),
 	CreationDate: aws.String("2019-03-31T21:04:57.000Z"),
@@ -30,6 +31,7 @@ var newMasterImage = &ec2.Image{
 }
 
 var newishDevImage = &ec2.Image{
+	Name:         aws.String("devimage-alpha"),
 	Description:  aws.String("Newish Dev Image"),
 	ImageId:      aws.String("ami-22222222222222222"),
 	CreationDate: aws.String("2019-03-30T21:04:57.000Z"),
@@ -55,12 +57,14 @@ var newishDevImage = &ec2.Image{
 }
 
 var oldDevImage = &ec2.Image{
+	Name:         aws.String("devimage-bravo"),
 	Description:  aws.String("Old Dev Image"),
 	ImageId:      aws.String("ami-33333333333333333"),
 	CreationDate: aws.String("2019-03-01T21:04:57.000Z"),
 	Tags: []*ec2.Tag{
 		&ec2.Tag{Key: aws.String("Name"), Value: aws.String("oldDevImage")},
 		&ec2.Tag{Key: aws.String("Branch"), Value: aws.String("development")},
+		&ec2.Tag{Key: aws.String("Foozle"), Value: aws.String("Fizzbin")},
 	},
 	BlockDeviceMappings: []*ec2.BlockDeviceMapping{
 		&ec2.BlockDeviceMapping{
@@ -74,12 +78,14 @@ var oldDevImage = &ec2.Image{
 }
 
 var noEbsImage = &ec2.Image{
+	Name:         aws.String("experiment-alpha"),
 	Description:  aws.String("No EBS Image"),
 	ImageId:      aws.String("ami-44444444444444444"),
 	CreationDate: aws.String("2019-03-01T21:04:57.000Z"),
 	Tags: []*ec2.Tag{
 		&ec2.Tag{Key: aws.String("Name"), Value: aws.String("noEbsImage")},
 		&ec2.Tag{Key: aws.String("Branch"), Value: aws.String("experimental")},
+		&ec2.Tag{Key: aws.String("Foozle"), Value: aws.String("Whatsit")},
 	},
 	RootDeviceType: aws.String("instance-store"),
 }
