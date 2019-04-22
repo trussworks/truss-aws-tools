@@ -20,6 +20,7 @@ type AMIClean struct {
 	NamePrefix     string
 	Delete         bool
 	Branch         string
+	Tag	       *ec2.Tag
 	Invert         bool
 	ExpirationDate time.Time
 	Logger         *zap.Logger
@@ -50,11 +51,19 @@ func (a *AMIClean) GetImages() (*ec2.DescribeImagesOutput, error) {
 
 	return output, nil
 }
-// TODO: Need a generic function that will find the value of a given tag key
-// for an AMI. This will simplify the code for FindImagesToPurge and also
-// make it easier to give the tag output in the PurgeImages function. Making
-// it generic will also allow us to change the branch option to a more generic
-// tag option.
+
+// MatchTags lets us see if an arbitrary tag is set to the appropriate value
+// within an image.
+func matchTags(image *ec2.Image, tag *ec2.Tag) bool {
+	for _, image_tag := range image.Tags {
+		if *tag.Key == *image_tag.Key && *tag.Value == *image_tag.Value {
+			return true
+		}
+	}
+
+	return false
+}
+
 
 // FindImagesToPurge looks through the AMIs available and produces a slice of
 // ec2.Image objects to put on the chopping block based on the contents of the
@@ -73,41 +82,38 @@ func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Im
 			} else {
 				// If invert is set, we're looking for AMIs which are
 				// NOT in the branch selected.
+				testTag := &ec2.Tag{ Key: aws.String("Branch"), Value: aws.String(a.Branch) }
 				if a.Invert {
-					for _, tag := range image.Tags {
-						if *tag.Key == "Branch" && *tag.Value != a.Branch {
-							// Optimally, this output
-							// should all get moved into the
-							// PurgeImages call.
-							a.Logger.Info("selected ami for purging",
-								zap.String("ami-id",
-									*image.ImageId),
-								zap.String("ami-branch-tag",
-									*tag.Value),
-								zap.String("ami-creation-date",
-									imageCreationTime.String()),
-							)
-							ImagesToPurge =
-								append(ImagesToPurge, image)
-						}
+					if ! matchTags(image, testTag) {
+						// Optimally, this output
+						// should all get moved into the
+						// PurgeImages call.
+						a.Logger.Info("selected ami for purging",
+							zap.String("ami-id",
+								*image.ImageId),
+							zap.String("ami-branch-tag",
+								*testTag.Value),
+							zap.String("ami-creation-date",
+								imageCreationTime.String()),
+						)
+						ImagesToPurge =
+							append(ImagesToPurge, image)
 					}
-					// Otherwise, we're looking at all the AMIs with Branch
-					// set to whatever we set it to in the command line.
+				// Otherwise, we're looking at all the AMIs with Branch
+				// set to whatever we set it to in the command line.
 				} else {
-					for _, tag := range image.Tags {
-						if *tag.Key == "Branch" && *tag.Value == a.Branch {
-							// Same note as above.
-							a.Logger.Info("selected ami for purging",
-								zap.String("ami-id",
-									*image.ImageId),
-								zap.String("ami-branch-tag",
-									*tag.Value),
-								zap.String("ami-creation-date",
-									imageCreationTime.String()),
-							)
-							ImagesToPurge =
-								append(ImagesToPurge, image)
-						}
+					if matchTags(image, testTag) {
+						// Same note as above.
+						a.Logger.Info("selected ami for purging",
+							zap.String("ami-id",
+								*image.ImageId),
+							zap.String("ami-branch-tag",
+								*testTag.Value),
+							zap.String("ami-creation-date",
+								imageCreationTime.String()),
+						)
+						ImagesToPurge =
+							append(ImagesToPurge, image)
 					}
 				}
 			}
