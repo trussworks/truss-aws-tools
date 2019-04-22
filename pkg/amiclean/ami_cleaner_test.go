@@ -100,22 +100,24 @@ func TestFindImagesToPurge(t *testing.T) {
 	tables := []struct {
 		imageSet      []*ec2.Image
 		NamePrefix    string
-		Branch        string
+		Tag           *ec2.Tag
 		Invert        bool
 		RetentionDays int
 		resultSet     []*ec2.Image
 	}{
-		{testImages, "", "master", false, 1, []*ec2.Image(nil)},
-		{testImages, "", "development", false, 30, []*ec2.Image{oldDevImage}},
-		{testImages, "", "development", false, 1, []*ec2.Image{newishDevImage, oldDevImage}},
-		{testImages, "", "master", true, 1, []*ec2.Image{newishDevImage, oldDevImage, noEbsImage}},
-		{testImages, "devimage", "master", true, 1, []*ec2.Image{newishDevImage, oldDevImage}},
+		{testImages, "", &ec2.Tag{ Key: aws.String("Branch"), Value: aws.String("master")}, false, 1, []*ec2.Image(nil)},
+		{testImages, "", &ec2.Tag{ Key: aws.String("Branch"), Value: aws.String("development")}, false, 30, []*ec2.Image{oldDevImage}},
+		{testImages, "", &ec2.Tag{ Key: aws.String("Branch"), Value: aws.String("development")}, false, 1, []*ec2.Image{newishDevImage, oldDevImage}},
+		{testImages, "", &ec2.Tag{ Key: aws.String("Branch"), Value: aws.String("master")}, true, 1, []*ec2.Image{newishDevImage, oldDevImage, noEbsImage}},
+		{testImages, "devimage", &ec2.Tag{ Key: aws.String("Branch"), Value: aws.String("master")}, true, 1, []*ec2.Image{newishDevImage, oldDevImage}},
+		{testImages, "", &ec2.Tag{ Key: aws.String("Foozle"), Value: aws.String("Whatsit")}, false, 1, []*ec2.Image{noEbsImage}},
+		{testImages, "", &ec2.Tag{ Key: aws.String("Foozle"), Value: aws.String("Whatsit")}, true, 0, []*ec2.Image{newMasterImage, newishDevImage, oldDevImage}},
 	}
 
 	for _, table := range tables {
 		a := AMIClean{
 			NamePrefix:	table.NamePrefix,
-			Branch:         table.Branch,
+			Tag:            table.Tag,
 			Invert:         table.Invert,
 			Delete:         false,
 			ExpirationDate: now.AddDate(0, 0, -int(table.RetentionDays)),
@@ -132,7 +134,7 @@ func TestFindImagesToPurge(t *testing.T) {
 		if !reflect.DeepEqual(result, table.resultSet) {
 			t.Errorf("ERROR: prefix: %v, branch %v, invert %v, retention %v;\n\texpected: %v\n\tgot: %v",
 				table.NamePrefix,
-				table.Branch,
+				table.Tag,
 				table.Invert,
 				table.RetentionDays,
 				table.resultSet,
@@ -147,7 +149,7 @@ func TestFindImagesToPurge(t *testing.T) {
 // working right.
 func TestPurgeImages(t *testing.T) {
 	a := AMIClean{
-		Branch:         "master",
+		Tag:            &ec2.Tag{ Key: aws.String("Branch"), Value: aws.String("master")},
 		Invert:         true,
 		Delete:         false,
 		ExpirationDate: now.AddDate(0, 0, -1),

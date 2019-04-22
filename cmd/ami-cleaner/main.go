@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/aws"
 	flag "github.com/jessevdk/go-flags"
 	"go.uber.org/zap"
 
@@ -39,7 +40,7 @@ func cleanImages() {
 	now := time.Now().UTC()
 	a := amiclean.AMIClean{
 		NamePrefix:	options.NamePrefix,
-		Branch:         options.Branch,
+		Tag:            &ec2.Tag{ Key: aws.String("Branch"), Value: aws.String(options.Branch)},
 		Delete:         options.Delete,
 		Invert:         options.Invert,
 		ExpirationDate: now.AddDate(0, 0, -int(options.RetentionDays)),

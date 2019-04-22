@@ -19,7 +19,6 @@ const (
 type AMIClean struct {
 	NamePrefix     string
 	Delete         bool
-	Branch         string
 	Tag	       *ec2.Tag
 	Invert         bool
 	ExpirationDate time.Time
@@ -54,14 +53,25 @@ func (a *AMIClean) GetImages() (*ec2.DescribeImagesOutput, error) {
 
 // MatchTags lets us see if an arbitrary tag is set to the appropriate value
 // within an image.
-func matchTags(image *ec2.Image, tag *ec2.Tag) bool {
+func matchTags(image *ec2.Image, tag *ec2.Tag) (bool, *ec2.Tag) {
 	for _, image_tag := range image.Tags {
-		if *tag.Key == *image_tag.Key && *tag.Value == *image_tag.Value {
-			return true
+		if *tag.Key == *image_tag.Key {
+			if *tag.Value == *image_tag.Value {
+				// If the tag exists, and has the value we're
+				// looking for, return true and the image tag.
+				return true, image_tag
+			} else {
+				// If the tag exists, and doesn't have the
+				// value we're looking for, return false and
+				// the image tag.
+				return false, image_tag
+			}
 		}
 	}
 
-	return false
+	// If we didn't find the tag key anywhere, return false and a filler
+	// value.
+	return false, &ec2.Tag{ Key: tag.Key, Value: aws.String("not found")}
 }
 
 
@@ -80,19 +90,27 @@ func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Im
 			if imageCreationTime.After(a.ExpirationDate) {
 				continue
 			} else {
+				// See if the image matches the tag we got from the
+				// AMIClean struct.
+				match, match_tag := matchTags(image, a.Tag)
+
 				// If invert is set, we're looking for AMIs which are
 				// NOT in the branch selected.
-				testTag := &ec2.Tag{ Key: aws.String("Branch"), Value: aws.String(a.Branch) }
 				if a.Invert {
-					if ! matchTags(image, testTag) {
+					match, match_tag := matchTags(image, a.Tag)
+					if ! match {
 						// Optimally, this output
 						// should all get moved into the
 						// PurgeImages call.
 						a.Logger.Info("selected ami for purging",
 							zap.String("ami-id",
 								*image.ImageId),
-							zap.String("ami-branch-tag",
-								*testTag.Value),
+							zap.String("ami-name",
+								*image.Name),
+							zap.String("ami-tag-key",
+								*match_tag.Key),
+							zap.String("ami-tag-value",
+								*match_tag.Value),
 							zap.String("ami-creation-date",
 								imageCreationTime.String()),
 						)
@@ -102,13 +120,17 @@ func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Im
 				// Otherwise, we're looking at all the AMIs with Branch
 				// set to whatever we set it to in the command line.
 				} else {
-					if matchTags(image, testTag) {
+					if match {
 						// Same note as above.
 						a.Logger.Info("selected ami for purging",
 							zap.String("ami-id",
 								*image.ImageId),
-							zap.String("ami-branch-tag",
-								*testTag.Value),
+							zap.String("ami-name",
+								*image.Name),
+							zap.String("ami-tag-key",
+								*match_tag.Key),
+							zap.String("ami-tag-value",
+								*match_tag.Value),
 							zap.String("ami-creation-date",
 								imageCreationTime.String()),
 						)
