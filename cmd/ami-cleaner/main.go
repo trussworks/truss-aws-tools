@@ -16,6 +16,7 @@ import (
 // The Options struct describes the command line options available.
 type Options struct {
 	Delete        bool   `short:"D" long:"delete" description:"Actually purge AMIs (runs in dryrun mode by default)."`
+	NamePrefix    string `long:"prefix" description:"Name prefix to filter on (not affected by --invert)."`
 	RetentionDays int    `long:"days" default:"30" description:"Age of AMI in days before it is a candidate for removal."`
 	Branch        string `short:"b" long:"branch" required:"true" description:"Branch to purge. If the the --invert option is used, this is the branch NOT to operate on."`
 	Invert        bool   `short:"i" long:"invert" description:"Operate in inverted mode -- only purge AMIs that are NOT in the branch provided."`
@@ -37,6 +38,7 @@ func makeEC2Client(region, profile string) *ec2.EC2 {
 func cleanImages() {
 	now := time.Now().UTC()
 	a := amiclean.AMIClean{
+		NamePrefix:	options.NamePrefix,
 		Branch:         options.Branch,
 		Delete:         options.Delete,
 		Invert:         options.Invert,
