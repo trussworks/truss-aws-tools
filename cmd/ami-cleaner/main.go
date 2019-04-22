@@ -5,8 +5,8 @@ import (
 	"github.com/trussworks/truss-aws-tools/pkg/amiclean"
 
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	flag "github.com/jessevdk/go-flags"
 	"go.uber.org/zap"
 
@@ -19,8 +19,9 @@ type Options struct {
 	Delete        bool   `short:"D" long:"delete" description:"Actually purge AMIs (runs in dryrun mode by default)."`
 	NamePrefix    string `long:"prefix" description:"Name prefix to filter on (not affected by --invert)."`
 	RetentionDays int    `long:"days" default:"30" description:"Age of AMI in days before it is a candidate for removal."`
-	Branch        string `short:"b" long:"branch" required:"true" description:"Branch to purge. If the the --invert option is used, this is the branch NOT to operate on."`
-	Invert        bool   `short:"i" long:"invert" description:"Operate in inverted mode -- only purge AMIs that are NOT in the branch provided."`
+	TagKey        string `short:"k" long:"tag-key" description:"Key of tag to operate on. If you specify a Key, you must also specify a Value."`
+	TagValue      string `short:"v" long:"tag-value" description:"Value of tag to operate on. If you specify a Value, you must also specify a Key."`
+	Invert        bool   `short:"i" long:"invert" description:"Operate in inverted mode -- only purge AMIs that do NOT match the Tag provided."`
 	Profile       string `short:"p" long:"profile" env:"PROFILE" required:"false" description:"The AWS profile to use."`
 	Region        string `short:"r" long:"region" env:"REGION" required:"false" description:"The AWS region to use."`
 	Lambda        bool   `long:"lambda" required:"false" env:"LAMBDA" description:"Run as an AWS Lambda function."`
@@ -38,9 +39,15 @@ func makeEC2Client(region, profile string) *ec2.EC2 {
 
 func cleanImages() {
 	now := time.Now().UTC()
+	// We need to check to make sure that if we have a Tag Key, we also have
+	// a Tag Value.
+	if (options.TagKey == "") != (options.TagValue == "") {
+		logger.Fatal("must specify both a tag Key and tag Value")
+	}
+
 	a := amiclean.AMIClean{
-		NamePrefix:	options.NamePrefix,
-		Tag:            &ec2.Tag{ Key: aws.String("Branch"), Value: aws.String(options.Branch)},
+		NamePrefix:     options.NamePrefix,
+		Tag:            &ec2.Tag{Key: aws.String(options.TagKey), Value: aws.String(options.TagValue)},
 		Delete:         options.Delete,
 		Invert:         options.Invert,
 		ExpirationDate: now.AddDate(0, 0, -int(options.RetentionDays)),
