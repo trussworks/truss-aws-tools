@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap"
 
 	"time"
+	"strings"
 )
 
 const (
@@ -16,6 +17,7 @@ const (
 // AMIClean defines parameters for cleaning up AMIs based on the Branch and
 // Expiration Date.
 type AMIClean struct {
+	NamePrefix     string
 	Delete         bool
 	Branch         string
 	Invert         bool
@@ -48,7 +50,6 @@ func (a *AMIClean) GetImages() (*ec2.DescribeImagesOutput, error) {
 
 	return output, nil
 }
-
 // TODO: Need a generic function that will find the value of a given tag key
 // for an AMI. This will simplify the code for FindImagesToPurge and also
 // make it easier to give the tag output in the PurgeImages function. Making
@@ -61,48 +62,52 @@ func (a *AMIClean) GetImages() (*ec2.DescribeImagesOutput, error) {
 func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Image {
 	var ImagesToPurge []*ec2.Image
 	for _, image := range output.Images {
-		imageCreationTime, _ := time.Parse(RFC8601, *image.CreationDate)
-		// If the AMI isn't old enough to be purged, we don't care
-		// about anything else. Just move on.
-		if imageCreationTime.After(a.ExpirationDate) {
+		if ! strings.HasPrefix(*image.Name, a.NamePrefix) {
 			continue
 		} else {
-			// If invert is set, we're looking for AMIs which are
-			// NOT in the branch selected.
-			if a.Invert {
-				for _, tag := range image.Tags {
-					if *tag.Key == "Branch" && *tag.Value != a.Branch {
-						// Optimally, this output
-						// should all get moved into the
-						// PurgeImages call.
-						a.Logger.Info("selected ami for purging",
-							zap.String("ami-id",
-								*image.ImageId),
-							zap.String("ami-branch-tag",
-								*tag.Value),
-							zap.String("ami-creation-date",
-								imageCreationTime.String()),
-						)
-						ImagesToPurge =
-							append(ImagesToPurge, image)
-					}
-				}
-				// Otherwise, we're looking at all the AMIs with Branch
-				// set to whatever we set it to in the command line.
+			imageCreationTime, _ := time.Parse(RFC8601, *image.CreationDate)
+			// If the AMI isn't old enough to be purged, we don't care
+			// about anything else. Just move on.
+			if imageCreationTime.After(a.ExpirationDate) {
+				continue
 			} else {
-				for _, tag := range image.Tags {
-					if *tag.Key == "Branch" && *tag.Value == a.Branch {
-						// Same note as above.
-						a.Logger.Info("selected ami for purging",
-							zap.String("ami-id",
-								*image.ImageId),
-							zap.String("ami-branch-tag",
-								*tag.Value),
-							zap.String("ami-creation-date",
-								imageCreationTime.String()),
-						)
-						ImagesToPurge =
-							append(ImagesToPurge, image)
+				// If invert is set, we're looking for AMIs which are
+				// NOT in the branch selected.
+				if a.Invert {
+					for _, tag := range image.Tags {
+						if *tag.Key == "Branch" && *tag.Value != a.Branch {
+							// Optimally, this output
+							// should all get moved into the
+							// PurgeImages call.
+							a.Logger.Info("selected ami for purging",
+								zap.String("ami-id",
+									*image.ImageId),
+								zap.String("ami-branch-tag",
+									*tag.Value),
+								zap.String("ami-creation-date",
+									imageCreationTime.String()),
+							)
+							ImagesToPurge =
+								append(ImagesToPurge, image)
+						}
+					}
+					// Otherwise, we're looking at all the AMIs with Branch
+					// set to whatever we set it to in the command line.
+				} else {
+					for _, tag := range image.Tags {
+						if *tag.Key == "Branch" && *tag.Value == a.Branch {
+							// Same note as above.
+							a.Logger.Info("selected ami for purging",
+								zap.String("ami-id",
+									*image.ImageId),
+								zap.String("ami-branch-tag",
+									*tag.Value),
+								zap.String("ami-creation-date",
+									imageCreationTime.String()),
+							)
+							ImagesToPurge =
+								append(ImagesToPurge, image)
+						}
 					}
 				}
 			}

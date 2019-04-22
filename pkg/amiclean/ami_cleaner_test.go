@@ -99,19 +99,22 @@ var logger, _ = zap.NewProduction()
 func TestFindImagesToPurge(t *testing.T) {
 	tables := []struct {
 		imageSet      []*ec2.Image
+		NamePrefix    string
 		Branch        string
 		Invert        bool
 		RetentionDays int
 		resultSet     []*ec2.Image
 	}{
-		{testImages, "master", false, 1, []*ec2.Image(nil)},
-		{testImages, "development", false, 30, []*ec2.Image{oldDevImage}},
-		{testImages, "development", false, 1, []*ec2.Image{newishDevImage, oldDevImage}},
-		{testImages, "master", true, 1, []*ec2.Image{newishDevImage, oldDevImage, noEbsImage}},
+		{testImages, "", "master", false, 1, []*ec2.Image(nil)},
+		{testImages, "", "development", false, 30, []*ec2.Image{oldDevImage}},
+		{testImages, "", "development", false, 1, []*ec2.Image{newishDevImage, oldDevImage}},
+		{testImages, "", "master", true, 1, []*ec2.Image{newishDevImage, oldDevImage, noEbsImage}},
+		{testImages, "devimage", "master", true, 1, []*ec2.Image{newishDevImage, oldDevImage}},
 	}
 
 	for _, table := range tables {
 		a := AMIClean{
+			NamePrefix:	table.NamePrefix,
 			Branch:         table.Branch,
 			Invert:         table.Invert,
 			Delete:         false,
@@ -122,12 +125,18 @@ func TestFindImagesToPurge(t *testing.T) {
 
 		output := &ec2.DescribeImagesOutput{Images: testImages}
 		result := a.FindImagesToPurge(output)
+		var result_names []string
+		for _, result_item := range result {
+			result_names = append(result_names, *result_item.Name)
+		}
 		if !reflect.DeepEqual(result, table.resultSet) {
-			t.Errorf("ERROR: branch %v, retention %d days failed;\n\texpected: %v\n\tgot: %v",
+			t.Errorf("ERROR: prefix: %v, branch %v, invert %v, retention %v;\n\texpected: %v\n\tgot: %v",
+				table.NamePrefix,
 				table.Branch,
+				table.Invert,
 				table.RetentionDays,
 				table.resultSet,
-				result)
+				result_names)
 		}
 	}
 }
