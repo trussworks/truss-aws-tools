@@ -5,8 +5,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"go.uber.org/zap"
 
-	"time"
 	"strings"
+	"time"
 )
 
 const (
@@ -19,7 +19,7 @@ const (
 type AMIClean struct {
 	NamePrefix     string
 	Delete         bool
-	Tag	       *ec2.Tag
+	Tag            *ec2.Tag
 	Invert         bool
 	ExpirationDate time.Time
 	Logger         *zap.Logger
@@ -54,26 +54,25 @@ func (a *AMIClean) GetImages() (*ec2.DescribeImagesOutput, error) {
 // MatchTags lets us see if an arbitrary tag is set to the appropriate value
 // within an image.
 func matchTags(image *ec2.Image, tag *ec2.Tag) (bool, *ec2.Tag) {
-	for _, image_tag := range image.Tags {
-		if *tag.Key == *image_tag.Key {
-			if *tag.Value == *image_tag.Value {
+	for _, imageTag := range image.Tags {
+		if *tag.Key == *imageTag.Key {
+			if *tag.Value == *imageTag.Value {
 				// If the tag exists, and has the value we're
 				// looking for, return true and the image tag.
-				return true, image_tag
+				return true, imageTag
 			} else {
 				// If the tag exists, and doesn't have the
 				// value we're looking for, return false and
 				// the image tag.
-				return false, image_tag
+				return false, imageTag
 			}
 		}
 	}
 
 	// If we didn't find the tag key anywhere, return false and a filler
 	// value.
-	return false, &ec2.Tag{ Key: tag.Key, Value: aws.String("not found")}
+	return false, &ec2.Tag{Key: tag.Key, Value: aws.String("not found")}
 }
-
 
 // FindImagesToPurge looks through the AMIs available and produces a slice of
 // ec2.Image objects to put on the chopping block based on the contents of the
@@ -81,7 +80,7 @@ func matchTags(image *ec2.Image, tag *ec2.Tag) (bool, *ec2.Tag) {
 func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Image {
 	var ImagesToPurge []*ec2.Image
 	for _, image := range output.Images {
-		if ! strings.HasPrefix(*image.Name, a.NamePrefix) {
+		if !strings.HasPrefix(*image.Name, a.NamePrefix) {
 			continue
 		} else {
 			imageCreationTime, _ := time.Parse(RFC8601, *image.CreationDate)
@@ -92,13 +91,13 @@ func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Im
 			} else {
 				// See if the image matches the tag we got from the
 				// AMIClean struct.
-				match, match_tag := matchTags(image, a.Tag)
+				match, matchedTag := matchTags(image, a.Tag)
 
 				// If invert is set, we're looking for AMIs which are
 				// NOT in the branch selected.
 				if a.Invert {
-					match, match_tag := matchTags(image, a.Tag)
-					if ! match {
+					match, matchedTag := matchTags(image, a.Tag)
+					if !match {
 						// Optimally, this output
 						// should all get moved into the
 						// PurgeImages call.
@@ -108,17 +107,17 @@ func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Im
 							zap.String("ami-name",
 								*image.Name),
 							zap.String("ami-tag-key",
-								*match_tag.Key),
+								*matchedTag.Key),
 							zap.String("ami-tag-value",
-								*match_tag.Value),
+								*matchedTag.Value),
 							zap.String("ami-creation-date",
 								imageCreationTime.String()),
 						)
 						ImagesToPurge =
 							append(ImagesToPurge, image)
 					}
-				// Otherwise, we're looking at all the AMIs with Branch
-				// set to whatever we set it to in the command line.
+					// Otherwise, we're looking at all the AMIs with Branch
+					// set to whatever we set it to in the command line.
 				} else {
 					if match {
 						// Same note as above.
@@ -128,9 +127,9 @@ func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Im
 							zap.String("ami-name",
 								*image.Name),
 							zap.String("ami-tag-key",
-								*match_tag.Key),
+								*matchedTag.Key),
 							zap.String("ami-tag-value",
-								*match_tag.Value),
+								*matchedTag.Value),
 							zap.String("ami-creation-date",
 								imageCreationTime.String()),
 						)
