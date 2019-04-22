@@ -40,6 +40,7 @@ func (a *AMIClean) GetImages() (*ec2.DescribeImagesOutput, error) {
 				Values: []*string{aws.String("false")},
 			},
 		},
+		Owners: []*string{aws.String("self")},
 	}
 
 	output, err := a.EC2Client.DescribeImages(input)
