@@ -19,8 +19,8 @@ type Options struct {
 	Delete        bool   `short:"D" long:"delete" description:"Actually purge AMIs (runs in dryrun mode by default)."`
 	NamePrefix    string `long:"prefix" description:"Name prefix to filter on (not affected by --invert)."`
 	RetentionDays int    `long:"days" default:"30" description:"Age of AMI in days before it is a candidate for removal."`
-	TagKey        string `short:"k" long:"tag-key" description:"Key of tag to operate on. If you specify a Key, you must also specify a Value."`
-	TagValue      string `short:"v" long:"tag-value" description:"Value of tag to operate on. If you specify a Value, you must also specify a Key."`
+	TagKey        string `long:"tag-key" description:"Key of tag to operate on. If you specify a Key, you must also specify a Value."`
+	TagValue      string `long:"tag-value" description:"Value of tag to operate on. If you specify a Value, you must also specify a Key."`
 	Invert        bool   `short:"i" long:"invert" description:"Operate in inverted mode -- only purge AMIs that do NOT match the Tag provided."`
 	Profile       string `short:"p" long:"profile" env:"PROFILE" required:"false" description:"The AWS profile to use."`
 	Region        string `short:"r" long:"region" env:"REGION" required:"false" description:"The AWS region to use."`
