@@ -16,12 +16,12 @@ import (
 
 // The Options struct describes the command line options available.
 type Options struct {
-	Delete        bool   `short:"D" long:"delete" description:"Actually purge AMIs (runs in dryrun mode by default)."`
-	NamePrefix    string `long:"prefix" description:"Name prefix to filter on (not affected by --invert)."`
-	RetentionDays int    `long:"days" default:"30" description:"Age of AMI in days before it is a candidate for removal."`
-	TagKey        string `long:"tag-key" description:"Key of tag to operate on. If you specify a Key, you must also specify a Value."`
-	TagValue      string `long:"tag-value" description:"Value of tag to operate on. If you specify a Value, you must also specify a Key."`
-	Invert        bool   `short:"i" long:"invert" description:"Operate in inverted mode -- only purge AMIs that do NOT match the Tag provided."`
+	Delete        bool   `short:"D" long:"delete" env:"DELETE" description:"Actually purge AMIs (runs in dryrun mode by default)."`
+	NamePrefix    string `long:"prefix" env:"NAME_PREFIX" description:"Name prefix to filter on (not affected by --invert)."`
+	RetentionDays int    `long:"days" default:"30" env:"RETENTION_DAYS" description:"Age of AMI in days before it is a candidate for removal."`
+	TagKey        string `long:"tag-key" env:"TAG_KEY" description:"Key of tag to operate on. If you specify a Key, you must also specify a Value."`
+	TagValue      string `long:"tag-value" env:"TAG_VALUE" description:"Value of tag to operate on. If you specify a Value, you must also specify a Key."`
+	Invert        bool   `short:"i" long:"invert" env:"INVERT" description:"Operate in inverted mode -- only purge AMIs that do NOT match the Tag provided."`
 	Profile       string `short:"p" long:"profile" env:"PROFILE" required:"false" description:"The AWS profile to use."`
 	Region        string `short:"r" long:"region" env:"REGION" required:"false" description:"The AWS region to use."`
 	Lambda        bool   `long:"lambda" required:"false" env:"LAMBDA" description:"Run as an AWS Lambda function."`
