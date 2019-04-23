@@ -34,12 +34,6 @@ func (a *AMIClean) GetImages() (*ec2.DescribeImagesOutput, error) {
 	var output *ec2.DescribeImagesOutput
 
 	input := &ec2.DescribeImagesInput{
-		Filters: []*ec2.Filter{
-			{
-				Name:   aws.String("is-public"),
-				Values: []*string{aws.String("false")},
-			},
-		},
 		Owners: []*string{aws.String("self")},
 	}
 
