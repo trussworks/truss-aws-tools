@@ -1,7 +1,6 @@
 package amiclean
 
 import (
-	"reflect"
 	"testing"
 	"time"
 
@@ -138,73 +137,6 @@ func TestCheckImage(t *testing.T) {
 				)
 			}
 		}
-	}
-}
-
-func TestFindImagesToPurge(t *testing.T) {
-	tables := []struct {
-		imageSet      []*ec2.Image
-		NamePrefix    string
-		Tag           *ec2.Tag
-		Invert        bool
-		RetentionDays int
-		resultSet     []*ec2.Image
-	}{
-		{testImages, "", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("master")}, false, 1, []*ec2.Image(nil)},
-		{testImages, "", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("development")}, false, 30, []*ec2.Image{oldDevImage}},
-		{testImages, "", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("development")}, false, 1, []*ec2.Image{newishDevImage, oldDevImage}},
-		{testImages, "", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("master")}, true, 1, []*ec2.Image{newishDevImage, oldDevImage, noEbsImage}},
-		{testImages, "devimage", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("master")}, true, 1, []*ec2.Image{newishDevImage, oldDevImage}},
-		{testImages, "", &ec2.Tag{Key: aws.String("Foozle"), Value: aws.String("Whatsit")}, false, 1, []*ec2.Image{noEbsImage}},
-		{testImages, "", &ec2.Tag{Key: aws.String("Foozle"), Value: aws.String("Whatsit")}, true, 0, []*ec2.Image{newMasterImage, newishDevImage, oldDevImage}},
-	}
-
-	for _, table := range tables {
-		a := AMIClean{
-			NamePrefix:     table.NamePrefix,
-			Tag:            table.Tag,
-			Invert:         table.Invert,
-			Delete:         false,
-			ExpirationDate: now.AddDate(0, 0, -int(table.RetentionDays)),
-			Logger:         logger,
-			EC2Client:      nil,
-		}
-
-		output := &ec2.DescribeImagesOutput{Images: testImages}
-		result := a.FindImagesToPurge(output)
-		var resultNames []string
-		for _, resultItem := range result {
-			resultNames = append(resultNames, *resultItem.Name)
-		}
-		if !reflect.DeepEqual(result, table.resultSet) {
-			t.Errorf("ERROR: prefix: %v, branch %v, invert %v, retention %v;\n\texpected: %v\n\tgot: %v",
-				table.NamePrefix,
-				table.Tag,
-				table.Invert,
-				table.RetentionDays,
-				table.resultSet,
-				resultNames)
-		}
-	}
-}
-
-// Actually purging images is a little difficult to test; the function always
-// returns nil. We might want to change that so it can be tested. I am adding
-// this test to at least see the messages and know that all the logic is
-// working right.
-func TestPurgeImages(t *testing.T) {
-	a := AMIClean{
-		Tag:            &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("master")},
-		Invert:         true,
-		Delete:         false,
-		ExpirationDate: now.AddDate(0, 0, -1),
-		Logger:         logger,
-		EC2Client:      nil,
-	}
-
-	err := a.PurgeImages(testImages)
-	if err != nil {
-		t.Errorf("ERROR: PurgeImages test failed")
 	}
 }
 
