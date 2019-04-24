@@ -14,8 +14,8 @@ const (
 	RFC8601 = "2006-01-02T15:04:05.000Z"
 )
 
-// AMIClean defines parameters for cleaning up AMIs based on the Branch and
-// Expiration Date.
+// AMIClean defines parameters for cleaning up AMIs based on a tag and
+// expiration date.
 type AMIClean struct {
 	NamePrefix     string
 	Delete         bool
@@ -88,8 +88,8 @@ func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Im
 				// AMIClean struct.
 				match, matchedTag := matchTags(image, a.Tag)
 
-				// If invert is set, we're looking for AMIs which are
-				// NOT in the branch selected.
+				// If invert is set, we're looking for AMIs which do
+				// NOT match the specified tag.
 				if a.Invert {
 					match, matchedTag := matchTags(image, a.Tag)
 					if !match {
@@ -111,8 +111,8 @@ func (a *AMIClean) FindImagesToPurge(output *ec2.DescribeImagesOutput) []*ec2.Im
 						ImagesToPurge =
 							append(ImagesToPurge, image)
 					}
-					// Otherwise, we're looking at all the AMIs with Branch
-					// set to whatever we set it to in the command line.
+					// Otherwise, we're looking at all the AMIs which do
+					// match the specified tag.
 				} else {
 					if match {
 						// Same note as above.
