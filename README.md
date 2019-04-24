@@ -11,6 +11,7 @@ AWS tools that come in handy.
 | s3-bucket-size          | figures out how many bytes are in a given bucket as of the last CloudWatch metric update. Must faster and cheaper than iterating over all of the objects and usually "good enough". | No |
 | trusted-advisor-refresh | triggers a refresh of Trusted Advisor because AWS doesn't do this for you.                               | Yes                 |
 | aws-health-notifier     | Sends notifcations to a Slack webhook when AWS Health Events (read AWS outage) are triggered             | Yes                 |
+| ami-cleaner             | Deregisters AMIs and deletes associated snapshots based on name/tag/age                                  | Yes                 |
 
 ## Installation
 
