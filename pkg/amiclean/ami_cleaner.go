@@ -69,6 +69,43 @@ func matchTags(image *ec2.Image, tag *ec2.Tag) (bool, *ec2.Tag) {
 	return false, &ec2.Tag{Key: tag.Key, Value: aws.String("not found")}
 }
 
+// CheckImage compares a given image to the purge criteria and returns true
+// if the image matches the criteria.
+func (a *AMIClean) CheckImage(image *ec2.Image) bool {
+	// First look at the name and see if it matches our prefix. If it
+	// does not, we can bail out quickly with a false result.
+	if !strings.HasPrefix(*image.Name, a.NamePrefix) {
+		return false
+	}
+
+	// Next, check the image's age and compare it to our expiration date.
+	// If it's not old enough, we can again return false.
+	imageCreationTime, _ := time.Parse(RFC8601, *image.CreationDate)
+	if imageCreationTime.After(a.ExpirationDate) {
+		return false
+	}
+
+	// Finally, we want to check against the tags we're looking at.
+	match, matchedTag := matchTags(image, a.Tag)
+	// We can be a little clever here to reduce our code. If a.Invert is
+	// not the same as match, then we know either Invert was not set and
+	// we do have a match, or Invert was set and we don't have a match;
+	// either way, this is an AMI we want to mark for removal.
+	if a.Invert != match {
+		a.Logger.Debug("ami matched selection criteria",
+			zap.String("ami-id", *image.ImageId),
+			zap.String("ami-name", *image.Name),
+			zap.String("ami-tag-key", *matchedTag.Key),
+			zap.String("ami-tag-value", *matchedTag.Value),
+			zap.String("ami-creation-date", imageCreationTime.String()),
+		)
+		return true
+	}
+
+	// If we've gotten here, we know the AMI doesn't need to go.
+	return false
+}
+
 // FindImagesToPurge looks through the AMIs available and produces a slice of
 // ec2.Image objects to put on the chopping block based on the contents of the
 // AMIClean struct.

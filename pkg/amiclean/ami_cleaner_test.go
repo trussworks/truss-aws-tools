@@ -96,6 +96,51 @@ var now = time.Date(2019, 4, 1, 0, 0, 0, 0, time.UTC)
 
 var logger, _ = zap.NewProduction()
 
+func TestCheckImage(t *testing.T) {
+	tables := []struct {
+		imageSet      []*ec2.Image
+		NamePrefix    string
+		Tag           *ec2.Tag
+		Invert        bool
+		RetentionDays int
+		resultSet     []bool
+	}{
+		{testImages, "", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("master")}, false, 1, []bool{false, false, false, false}},
+		{testImages, "", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("development")}, false, 30, []bool{false, false, true, false}},
+		{testImages, "", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("development")}, false, 1, []bool{false, true, true, false}},
+		{testImages, "", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("master")}, true, 1, []bool{false, true, true, true}},
+		{testImages, "devimage", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("master")}, true, 1, []bool{false, true, true, false}},
+		{testImages, "", &ec2.Tag{Key: aws.String("Foozle"), Value: aws.String("Whatsit")}, false, 1, []bool{false, false, false, true}},
+		{testImages, "", &ec2.Tag{Key: aws.String("Foozle"), Value: aws.String("Whatsit")}, true, 0, []bool{true, true, true, false}},
+	}
+
+	for _, table := range tables {
+		a := AMIClean{
+			NamePrefix:     table.NamePrefix,
+			Tag:            table.Tag,
+			Invert:         table.Invert,
+			Delete:         false,
+			ExpirationDate: now.AddDate(0, 0, -int(table.RetentionDays)),
+			Logger:         logger,
+			EC2Client:      nil,
+		}
+
+		for index, image := range testImages {
+			if a.CheckImage(image) != table.resultSet[index] {
+				t.Errorf("ERROR: prefix: %v, tag: %v, invert %v, retention %v, image %v;\n\texpected: %v\n\tgot: %v",
+					table.NamePrefix,
+					table.Tag,
+					table.Invert,
+					table.RetentionDays,
+					*image.Name,
+					table.resultSet,
+					a.CheckImage(image),
+				)
+			}
+		}
+	}
+}
+
 func TestFindImagesToPurge(t *testing.T) {
 	tables := []struct {
 		imageSet      []*ec2.Image

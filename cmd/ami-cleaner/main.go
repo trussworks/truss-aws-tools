@@ -55,6 +55,7 @@ func cleanImages() {
 		EC2Client:      makeEC2Client(options.Region, options.Profile),
 	}
 
+	// Get the list of images that we want to evaluate from AWS.
 	availableImages, err := a.GetImages()
 	if err != nil {
 		logger.Fatal("unable to get list of available images",
@@ -62,13 +63,30 @@ func cleanImages() {
 		)
 	}
 
-	purgeList := a.FindImagesToPurge(availableImages)
-
-	err = a.PurgeImages(purgeList)
-	if err != nil {
-		logger.Fatal("unable to complete image purge",
-			zap.Error(err),
-		)
+	// For each image in the list, check to see if it matches the criteria.
+	for _, image := range availableImages.Images {
+		if a.CheckImage(image) == true {
+			// If it matches the criteria, we want to delete it.
+			amiId, err := a.PurgeImage(image)
+			// If we get an error, we stop the train.
+			if err != nil {
+				logger.Fatal("Failed to purge image",
+					zap.String("ami-id", amiId),
+					zap.Error(err),
+				)
+			}
+			// No error, so log success (based on whether we're in
+			// delete mode or not).
+			if a.Delete {
+				logger.Info("Successfully purged image",
+					zap.String("ami-id", amiId),
+				)
+			} else {
+				logger.Info("Would have purged image",
+					zap.String("ami-id", amiId),
+				)
+			}
+		}
 	}
 
 }
