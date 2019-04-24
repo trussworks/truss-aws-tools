@@ -14,8 +14,8 @@ const (
 	RFC8601 = "2006-01-02T15:04:05.000Z"
 )
 
-// AMIClean defines parameters for cleaning up AMIs based on the Branch and
-// Expiration Date.
+// AMIClean defines parameters for cleaning up AMIs based on a tag and
+// expiration date.
 type AMIClean struct {
 	NamePrefix     string
 	Delete         bool
