@@ -65,13 +65,13 @@ func cleanImages() {
 
 	// For each image in the list, check to see if it matches the criteria.
 	for _, image := range availableImages.Images {
-		if a.CheckImage(image) == true {
+		if a.CheckImage(image) {
 			// If it matches the criteria, we want to delete it.
-			amiId, err := a.PurgeImage(image)
+			amiID, err := a.PurgeImage(image)
 			// If we get an error, we stop the train.
 			if err != nil {
 				logger.Fatal("Failed to purge image",
-					zap.String("ami-id", amiId),
+					zap.String("ami-id", amiID),
 					zap.Error(err),
 				)
 			}
@@ -79,11 +79,11 @@ func cleanImages() {
 			// delete mode or not).
 			if a.Delete {
 				logger.Info("Successfully purged image",
-					zap.String("ami-id", amiId),
+					zap.String("ami-id", amiID),
 				)
 			} else {
 				logger.Info("Would have purged image",
-					zap.String("ami-id", amiId),
+					zap.String("ami-id", amiID),
 				)
 			}
 		}
