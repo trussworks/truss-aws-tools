@@ -162,3 +162,25 @@ func TestPurgeImages(t *testing.T) {
 		t.Errorf("ERROR: PurgeImages test failed")
 	}
 }
+
+// Testing the image purging is a little difficult; since we're not acting
+// on the actual AWS API, it's probably not going to error out. But this
+// does at least ensure that we're acting on the right types and parsing
+// things correctly, and we can see the log messages from the tests.
+func TestPurgeImage(t *testing.T) {
+	a := AMIClean{
+		Tag:            &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("master")},
+		Invert:         true,
+		Delete:         false,
+		ExpirationDate: now.AddDate(0, 0, -1),
+		Logger:         logger,
+		EC2Client:      nil,
+	}
+
+	for _, image := range testImages {
+		deletedImage, err := a.PurgeImage(image)
+		if !(deletedImage == *image.ImageId && err == nil) {
+			t.Errorf("ERROR: PurgeImage test failed for %v", *image.ImageId)
+		}
+	}
+}

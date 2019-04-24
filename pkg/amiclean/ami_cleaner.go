@@ -200,3 +200,63 @@ func (a *AMIClean) PurgeImages(images []*ec2.Image) error {
 	}
 	return nil
 }
+
+// PurgeImage operates on a single image, registering the image and
+// deleting any associated snapshots. We return the ID of the AMI
+// we deleted (in case that is interesting) and any errors.
+func (a *AMIClean) PurgeImage(image *ec2.Image) (string, error) {
+	// This is a circuit breaker because we currently assume all
+	// AMIs have EBS volumes. This is the case right now, but it
+	// isn't true in a more general case. More functionality would
+	// need to be added to handle instance-store backed AMIs.
+	if *image.RootDeviceType != "ebs" {
+		a.Logger.Info("image root device not EBS; will not purge",
+			zap.String("ami-id", *image.ImageId),
+		)
+	} else {
+		// There may be multiple snapshots attached to a single AMI,
+		// so we need to build a list and iterate on them.
+		var snapshotIds []*string
+		for _, blockDevice := range image.BlockDeviceMappings {
+			snapshotID := *blockDevice.Ebs.SnapshotId
+			snapshotIds = append(snapshotIds, &snapshotID)
+		}
+		deregisterInput := &ec2.DeregisterImageInput{
+			DryRun:  aws.Bool(!a.Delete),
+			ImageId: aws.String(*image.ImageId),
+		}
+		if a.Delete {
+			a.Logger.Info("deregistering ami",
+				zap.String("ami-id", *image.ImageId),
+			)
+			_, err := a.EC2Client.DeregisterImage(deregisterInput)
+			if err != nil {
+				return "Failed to deregister image", err
+			}
+		} else {
+			a.Logger.Info("would deregister ami",
+				zap.String("ami-id", *image.ImageId),
+			)
+		}
+		for _, snapshot := range snapshotIds {
+			deleteInput := &ec2.DeleteSnapshotInput{
+				DryRun:     aws.Bool(!a.Delete),
+				SnapshotId: aws.String(*snapshot),
+			}
+			if a.Delete {
+				a.Logger.Info("deleting snapshot",
+					zap.String("snapshot-id", *deleteInput.SnapshotId),
+				)
+				_, err := a.EC2Client.DeleteSnapshot(deleteInput)
+				if err != nil {
+					return "Failed to delete snapshot", err
+				}
+			} else {
+				a.Logger.Info("would delete snapshot",
+					zap.String("snapshot-id", *deleteInput.SnapshotId),
+				)
+			}
+		}
+	}
+	return *image.ImageId, nil
+}
