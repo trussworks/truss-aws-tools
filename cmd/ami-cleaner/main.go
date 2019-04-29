@@ -22,6 +22,7 @@ type Options struct {
 	TagKey        string `long:"tag-key" env:"TAG_KEY" description:"Key of tag to operate on. If you specify a Key, you must also specify a Value."`
 	TagValue      string `long:"tag-value" env:"TAG_VALUE" description:"Value of tag to operate on. If you specify a Value, you must also specify a Key."`
 	Invert        bool   `short:"i" long:"invert" env:"INVERT" description:"Operate in inverted mode -- only purge AMIs that do NOT match the Tag provided."`
+	Unused        bool   `long:"unused" env:"UNUSED" description:"Only purge AMIs for which no running instances were built from."`
 	Profile       string `short:"p" long:"profile" env:"PROFILE" required:"false" description:"The AWS profile to use."`
 	Region        string `short:"r" long:"region" env:"REGION" required:"false" description:"The AWS region to use."`
 	Lambda        bool   `long:"lambda" required:"false" env:"LAMBDA" description:"Run as an AWS Lambda function."`
@@ -50,11 +51,13 @@ func cleanImages() {
 		Tag:            &ec2.Tag{Key: aws.String(options.TagKey), Value: aws.String(options.TagValue)},
 		Delete:         options.Delete,
 		Invert:         options.Invert,
+		Unused:         options.Unused,
 		ExpirationDate: now.AddDate(0, 0, -int(options.RetentionDays)),
 		Logger:         logger,
 		EC2Client:      makeEC2Client(options.Region, options.Profile),
 	}
 
+	// Get the list of images that we want to evaluate from AWS.
 	availableImages, err := a.GetImages()
 	if err != nil {
 		logger.Fatal("unable to get list of available images",
@@ -62,13 +65,30 @@ func cleanImages() {
 		)
 	}
 
-	purgeList := a.FindImagesToPurge(availableImages)
-
-	err = a.PurgeImages(purgeList)
-	if err != nil {
-		logger.Fatal("unable to complete image purge",
-			zap.Error(err),
-		)
+	// For each image in the list, check to see if it matches the criteria.
+	for _, image := range availableImages.Images {
+		if a.CheckImage(image) {
+			// If it matches the criteria, we want to delete it.
+			amiID, err := a.PurgeImage(image)
+			// If we get an error, we stop the train.
+			if err != nil {
+				logger.Fatal("Failed to purge image",
+					zap.String("ami-id", amiID),
+					zap.Error(err),
+				)
+			}
+			// No error, so log success (based on whether we're in
+			// delete mode or not).
+			if a.Delete {
+				logger.Info("Successfully purged image",
+					zap.String("ami-id", amiID),
+				)
+			} else {
+				logger.Info("Would have purged image",
+					zap.String("ami-id", amiID),
+				)
+			}
+		}
 	}
 
 }
