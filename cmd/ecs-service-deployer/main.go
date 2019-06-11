@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/trussworks/truss-aws-tools/internal/aws/session"
@@ -65,7 +64,6 @@ func runECSDeploy() {
 	if err != nil {
 		logger.Fatal("Unable to get service or task definition", zap.Error(err))
 	}
-	fmt.Println(taskDefintition)
 	// Create a new task definition with new container defs
 	newTaskDefinition, err := e.RegisterUpdatedTaskDefinition(taskDefintition, containerMap)
 	if err != nil {
@@ -81,7 +79,6 @@ func runECSDeploy() {
 		logger.Fatal("Unable to update service to new task definition", zap.Error(err))
 	}
 	e.Logger.Info("Service is new", zap.String("serviceStatus", *updatedService.Status))
-	fmt.Println(updatedService)
 }
 
 func lambdaHandler() {
