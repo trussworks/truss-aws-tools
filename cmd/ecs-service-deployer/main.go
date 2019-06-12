@@ -70,14 +70,14 @@ func runECSDeploy() {
 
 	newTaskDefinitionArn := newTaskDefinition.TaskDefinitionArn
 
-	e.Logger.Info("Created new task definition.", zap.String("taskDefinitionArn", *newTaskDefinitionArn))
+	e.Logger.Info("Created new task definition", zap.String("taskDefinitionArn", *newTaskDefinitionArn))
 
 	updatedService, err := e.UpdateService(*newTaskDefinitionArn)
 
 	if err != nil {
 		logger.Fatal("Unable to update service to new task definition", zap.Error(err))
 	}
-	e.Logger.Info("Service is new", zap.String("serviceStatus", *updatedService.Status))
+	e.Logger.Info("Updated service to use new task definition", zap.String("serviceStatus", *updatedService.Status))
 
 }
 
@@ -96,11 +96,11 @@ func main() {
 	// Initalize zap logger
 	logger, err = zap.NewProduction()
 	if err != nil {
-		log.Fatalf("can't initialize zap logger: %v", err)
+		log.Fatalf("Can't initialize zap logger: %v", err)
 	}
 
 	if options.Lambda {
-		logger.Info("Running Lambda handler.")
+		logger.Info("Running Lambda handler")
 		lambdaHandler()
 	} else {
 		runECSDeploy()
