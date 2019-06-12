@@ -11,30 +11,22 @@ import (
 type ECSClusterServiceDeployer struct {
 	ECSCluster string
 	ECSService string
-	DryRun     bool
 	Logger     *zap.Logger
 	ECSClient  *ecs.ECS
 }
 
-func stringToStringSlice(originalString string) []string {
-	slice := make([]string, 1)
-	slice[0] = originalString
-	return slice
-}
-
-// GetServiceTaskDefiniton returns the primary/active task definition arn for the service/cluster combination
-func (e *ECSClusterServiceDeployer) GetServiceTaskDefiniton() (*ecs.TaskDefinition, error) {
+// GetServiceTaskDefinition returns the primary/active task definition arn for the service/cluster combination
+func (e *ECSClusterServiceDeployer) GetServiceTaskDefinition() (*ecs.TaskDefinition, error) {
 	describeServiceInput := &ecs.DescribeServicesInput{
 		Cluster:  aws.String(e.ECSCluster),
-		Services: aws.StringSlice(stringToStringSlice(e.ECSService)),
+		Services: aws.StringSlice([]string{e.ECSService}),
 	}
 
 	response, err := e.ECSClient.DescribeServices(describeServiceInput)
-	taskDefinitionArn := response.Services[0].TaskDefinition
-
 	if err != nil {
 		return nil, err
 	}
+	taskDefinitionArn := response.Services[0].TaskDefinition
 
 	e.Logger.Info("Found task definition arn.", zap.String("taskDefinitionArn", *taskDefinitionArn))
 
@@ -55,8 +47,9 @@ func (e *ECSClusterServiceDeployer) GetServiceTaskDefiniton() (*ecs.TaskDefiniti
 func (e *ECSClusterServiceDeployer) RegisterUpdatedTaskDefinition(taskDefinition *ecs.TaskDefinition, containerMap map[string]map[string]string) (*ecs.TaskDefinition, error) {
 	for containerName := range containerMap {
 		for idx, containerDefinition := range taskDefinition.ContainerDefinitions {
-			containerDefName := *containerDefinition.Name
-			if containerDefName == containerName {
+			//	containerDefName := *containerDefinition.Name
+			//	if containerDefName == containerName {
+			if containerName == *containerDefinition.Name {
 				*taskDefinition.ContainerDefinitions[idx].Image = containerMap[containerName]["image"]
 			}
 		}
