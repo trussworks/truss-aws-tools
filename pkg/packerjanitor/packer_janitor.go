@@ -13,6 +13,10 @@ import (
 const (
 	// RFC8601 is the date/time format used by AWS.
 	RFC8601 = "2006-01-02T15:04:05.000Z"
+	// DryRun is the type of error thrown by AWS when a task fails
+	// because it was run with the DryRun option but would have
+	// otherwise succeeded.
+	DryRun = "DryRunOperation"
 )
 
 // PackerClean is a generic struct used for the various functions.
@@ -88,7 +92,7 @@ func (p *PackerClean) CleanTerminateInstance(instance *ec2.Instance) error {
 			// If this was a dryrun operation, we want to
 			// log that we would have succeeded and keep
 			// going.
-			case "DryRunOperation":
+			case DryRun:
 				p.Logger.Info("Would have terminated instance",
 					zap.String("instance-id", *instance.InstanceId),
 					zap.Error(aerr),
@@ -176,7 +180,7 @@ func (p *PackerClean) PurgePackerResource(instance *ec2.Instance) error {
 			switch aerr.Code() {
 			// If we were doing this as a dry run, just log
 			// that we would have deleted it and continue.
-			case "DryRunOperation":
+			case DryRun:
 				p.Logger.Info("Would have deleted keypair",
 					zap.String("keypair", *instance.KeyName),
 					zap.Error(aerr),
@@ -212,7 +216,7 @@ func (p *PackerClean) PurgePackerResource(instance *ec2.Instance) error {
 			switch aerr.Code() {
 			// Same thing here as the rest; if we are in
 			// a dryrun, handwave our success.
-			case "DryRunOperation":
+			case DryRun:
 				p.Logger.Info("Would have deleted security group",
 					zap.String("security-group", *instance.SecurityGroups[0].GroupId),
 					zap.Error(aerr),
