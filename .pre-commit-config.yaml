@@ -11,10 +11,10 @@ repos:
         args:
           - --autofix
   - repo: git://github.com/dnephin/pre-commit-golang
-    sha: v0.2
+    sha: v0.3.4
     hooks:
       - id: go-fmt
-      - id: gometalinter
+      - id: golangci-lint
   - repo: git://github.com/igorshubovych/markdownlint-cli
     sha: v0.5.0
     hooks:
