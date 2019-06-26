@@ -157,11 +157,11 @@ func makeGetMetricStatisticsInputForSize(bucket string, storageType cloudWatchSt
 	// get.
 	startTime := now.Add(-time.Duration(86400*3) * time.Second)
 	d := []*cloudwatch.Dimension{
-		&cloudwatch.Dimension{
+		{
 			Name:  aws.String("BucketName"),
 			Value: &bucket,
 		},
-		&cloudwatch.Dimension{
+		{
 			Name:  aws.String("StorageType"),
 			Value: &storageTypeString,
 		},

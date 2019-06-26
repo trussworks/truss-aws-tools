@@ -121,7 +121,7 @@ func (p *PackerClean) CleanTerminateInstance(instance *ec2.Instance) error {
 
 	describeInput := &ec2.DescribeInstancesInput{
 		DryRun: aws.Bool(!p.Delete),
-		Filters: []*ec2.Filter{&ec2.Filter{
+		Filters: []*ec2.Filter{{
 			Name:   aws.String("instance-id"),
 			Values: []*string{instance.InstanceId},
 		},

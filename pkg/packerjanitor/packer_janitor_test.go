@@ -24,13 +24,13 @@ var logger, _ = zap.NewProduction()
 // our tests.
 var packerInstanceOld = &ec2.Instance{
 	Tags: []*ec2.Tag{
-		&ec2.Tag{Key: aws.String("Name"), Value: aws.String("Packer Builder")},
+		{Key: aws.String("Name"), Value: aws.String("Packer Builder")},
 	},
 	KeyName:    aws.String("packer_1234"),
 	LaunchTime: aws.Time(time.Date(2019, 6, 30, 0, 0, 0, 0, time.UTC)),
 	InstanceId: aws.String("i-11111111111111111"),
 	SecurityGroups: []*ec2.GroupIdentifier{
-		&ec2.GroupIdentifier{GroupId: aws.String("sg-11111111111111111")},
+		{GroupId: aws.String("sg-11111111111111111")},
 	},
 }
 
@@ -38,13 +38,13 @@ var packerInstanceOld = &ec2.Instance{
 // our tests.
 var packerInstanceAncient = &ec2.Instance{
 	Tags: []*ec2.Tag{
-		&ec2.Tag{Key: aws.String("Name"), Value: aws.String("Packer Builder")},
+		{Key: aws.String("Name"), Value: aws.String("Packer Builder")},
 	},
 	KeyName:    aws.String("packer_1234"),
 	LaunchTime: aws.Time(time.Date(2019, 5, 31, 0, 0, 0, 0, time.UTC)),
 	InstanceId: aws.String("i-22222222222222222"),
 	SecurityGroups: []*ec2.GroupIdentifier{
-		&ec2.GroupIdentifier{GroupId: aws.String("sg-22222222222222222")},
+		{GroupId: aws.String("sg-22222222222222222")},
 	},
 }
 
@@ -52,13 +52,13 @@ var packerInstanceAncient = &ec2.Instance{
 // be tossing it out in our tests.
 var packerInstanceNew = &ec2.Instance{
 	Tags: []*ec2.Tag{
-		&ec2.Tag{Key: aws.String("Name"), Value: aws.String("Packer Builder")},
+		{Key: aws.String("Name"), Value: aws.String("Packer Builder")},
 	},
 	KeyName:    aws.String("packer_6789"),
 	LaunchTime: aws.Time(time.Date(2019, 6, 30, 23, 59, 0, 0, time.UTC)),
 	InstanceId: aws.String("i-33333333333333333"),
 	SecurityGroups: []*ec2.GroupIdentifier{
-		&ec2.GroupIdentifier{GroupId: aws.String("sg-33333333333333333")},
+		{GroupId: aws.String("sg-33333333333333333")},
 	},
 }
 
@@ -97,8 +97,8 @@ func (m *mockEC2Client) DescribeInstances(input *ec2.DescribeInstancesInput) (*e
 			// I'm splitting these up into two reservations
 			// to test the looping.
 			Reservations: []*ec2.Reservation{
-				&ec2.Reservation{Instances: []*ec2.Instance{packerInstanceOld}},
-				&ec2.Reservation{Instances: []*ec2.Instance{packerInstanceNew, packerInstanceAncient}},
+				{Instances: []*ec2.Instance{packerInstanceOld}},
+				{Instances: []*ec2.Instance{packerInstanceNew, packerInstanceAncient}},
 			},
 		}
 		return output, nil

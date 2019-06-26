@@ -26,7 +26,9 @@ linters:
     - gosimple # 20+ files need to be patched
     - ineffassign # 20+ files need to be patched
     - staticcheck # 30+files need to be patched
-    - shadow # Disabling because rdscwlogs and iam-keys-check fail this at the moment
+linters-settings:
+  govet:
+    check-shadowing: false # Disabling; a couple things fail this, and it's not urgent to fix
 issues:
   fix: true
 run:

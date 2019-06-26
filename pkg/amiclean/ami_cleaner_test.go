@@ -15,11 +15,11 @@ var newMasterImage = &ec2.Image{
 	ImageId:      aws.String("ami-11111111111111111"),
 	CreationDate: aws.String("2019-03-31T21:04:57.000Z"),
 	Tags: []*ec2.Tag{
-		&ec2.Tag{Key: aws.String("Branch"), Value: aws.String("master")},
-		&ec2.Tag{Key: aws.String("Name"), Value: aws.String("newMasterImage")},
+		{Key: aws.String("Branch"), Value: aws.String("master")},
+		{Key: aws.String("Name"), Value: aws.String("newMasterImage")},
 	},
 	BlockDeviceMappings: []*ec2.BlockDeviceMapping{
-		&ec2.BlockDeviceMapping{
+		{
 			DeviceName: aws.String("/dev/xvda"),
 			Ebs: &ec2.EbsBlockDevice{
 				SnapshotId: aws.String("snap-11111111111111111"),
@@ -35,17 +35,17 @@ var newishDevImage = &ec2.Image{
 	ImageId:      aws.String("ami-22222222222222222"),
 	CreationDate: aws.String("2019-03-30T21:04:57.000Z"),
 	Tags: []*ec2.Tag{
-		&ec2.Tag{Key: aws.String("Branch"), Value: aws.String("development")},
-		&ec2.Tag{Key: aws.String("Name"), Value: aws.String("newishDevImage")},
+		{Key: aws.String("Branch"), Value: aws.String("development")},
+		{Key: aws.String("Name"), Value: aws.String("newishDevImage")},
 	},
 	BlockDeviceMappings: []*ec2.BlockDeviceMapping{
-		&ec2.BlockDeviceMapping{
+		{
 			DeviceName: aws.String("/dev/xvda"),
 			Ebs: &ec2.EbsBlockDevice{
 				SnapshotId: aws.String("snap-22222222222222222"),
 			},
 		},
-		&ec2.BlockDeviceMapping{
+		{
 			DeviceName: aws.String("/dev/xvdb"),
 			Ebs: &ec2.EbsBlockDevice{
 				SnapshotId: aws.String("snap-22222222222222223"),
@@ -61,12 +61,12 @@ var oldDevImage = &ec2.Image{
 	ImageId:      aws.String("ami-33333333333333333"),
 	CreationDate: aws.String("2019-03-01T21:04:57.000Z"),
 	Tags: []*ec2.Tag{
-		&ec2.Tag{Key: aws.String("Name"), Value: aws.String("oldDevImage")},
-		&ec2.Tag{Key: aws.String("Branch"), Value: aws.String("development")},
-		&ec2.Tag{Key: aws.String("Foozle"), Value: aws.String("Fizzbin")},
+		{Key: aws.String("Name"), Value: aws.String("oldDevImage")},
+		{Key: aws.String("Branch"), Value: aws.String("development")},
+		{Key: aws.String("Foozle"), Value: aws.String("Fizzbin")},
 	},
 	BlockDeviceMappings: []*ec2.BlockDeviceMapping{
-		&ec2.BlockDeviceMapping{
+		{
 			DeviceName: aws.String("/dev/xvda"),
 			Ebs: &ec2.EbsBlockDevice{
 				SnapshotId: aws.String("snap-33333333333333333"),
@@ -82,9 +82,9 @@ var noEbsImage = &ec2.Image{
 	ImageId:      aws.String("ami-44444444444444444"),
 	CreationDate: aws.String("2019-03-01T21:04:57.000Z"),
 	Tags: []*ec2.Tag{
-		&ec2.Tag{Key: aws.String("Name"), Value: aws.String("noEbsImage")},
-		&ec2.Tag{Key: aws.String("Branch"), Value: aws.String("experimental")},
-		&ec2.Tag{Key: aws.String("Foozle"), Value: aws.String("Whatsit")},
+		{Key: aws.String("Name"), Value: aws.String("noEbsImage")},
+		{Key: aws.String("Branch"), Value: aws.String("experimental")},
+		{Key: aws.String("Foozle"), Value: aws.String("Whatsit")},
 	},
 	RootDeviceType: aws.String("instance-store"),
 }
