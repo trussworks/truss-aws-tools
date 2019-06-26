@@ -30,7 +30,6 @@ type PackerClean struct {
 // GetPackerInstances -- find all running instances that are Packer
 // builds older than X and returns them in a list
 func (p *PackerClean) GetPackerInstances() ([]*ec2.Instance, error) {
-	var output *ec2.DescribeInstancesOutput
 	// Instances Packer starts all have the Name tag "Packer Builder".
 	packerFilter := &ec2.Filter{
 		Name:   aws.String("tag:Name"),
@@ -59,7 +58,7 @@ func (p *PackerClean) GetPackerInstances() ([]*ec2.Instance, error) {
 	// The output gives us reservations; we need to get the actual
 	// instances out of them, and look to make sure they are older
 	// than the time we're looking for.
-	var instanceList = []*ec2.Instance{}
+	var instanceList []*ec2.Instance
 
 	for _, reservation := range output.Reservations {
 		for _, instance := range reservation.Instances {
