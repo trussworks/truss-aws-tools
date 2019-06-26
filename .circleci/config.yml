@@ -16,7 +16,7 @@ jobs:
             - v1-vendor-{{ checksum "Gopkg.lock" }}
       - run: echo 'export PATH=${PATH}:~/go/bin' >> $BASH_ENV
       - run: go get -u github.com/golang/dep/cmd/dep
-      - run: go get -u github.com/golangci/golangci-lint
+      - run: go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
       - run: mkdir -p "${TEST_RESULTS}"
       - run: make all
       - save_cache:
