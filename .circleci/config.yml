@@ -17,7 +17,7 @@ jobs:
       - run: echo 'export PATH=${PATH}:~/go/bin' >> $BASH_ENV
       - run: go get -u github.com/golang/dep/cmd/dep
       - run: go get -u github.com/alecthomas/gometalinter
-      - run: gometalinter --install
+      - run: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.17.1
       - run: mkdir -p "${TEST_RESULTS}"
       - run: make all
       - save_cache:
