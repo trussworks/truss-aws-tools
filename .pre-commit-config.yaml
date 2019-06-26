@@ -10,11 +10,12 @@ repos:
       - id: pretty-format-json
         args:
           - --autofix
-  - repo: git://github.com/dnephin/pre-commit-golang
-    sha: v0.2
+  - repo: git://github.com/golangci/golangci-lint
+    rev: v1.17.1
     hooks:
-      - id: go-fmt
-      - id: gometalinter
+      - id: golangci-lint
+        entry: golangci-lint run --verbose
+        verbose: true
   - repo: git://github.com/igorshubovych/markdownlint-cli
     sha: v0.5.0
     hooks:

@@ -12,6 +12,7 @@ AWS tools that come in handy.
 | trusted-advisor-refresh | triggers a refresh of Trusted Advisor because AWS doesn't do this for you.                               | Yes                 |
 | aws-health-notifier     | Sends notifcations to a Slack webhook when AWS Health Events (read AWS outage) are triggered             | Yes                 |
 | ami-cleaner             | Deregisters AMIs and deletes associated snapshots based on name/tag/age                                  | Yes                 |
+| packer-janitor          | Removes abandoned Packer instances and their associated keypairs and security groups.                    | Yes                 |
 
 ## Installation
 
@@ -63,7 +64,6 @@ make S3_BUCKET=your-s3-bucket lambda_release
 * ebs volume snapshot deleter (all snaps older than x days, support keep tags)
 * redshift snapshot cleaner
 * automatic filesystem resizer (use case: you can make EBS volumes larger, but if you do, you still have to go in and run resize2fs (or whatever). Why not just do this at boot always?
-* Packer debris cleaner (old instances, security groups, etc)
 * AWS id lookup (ie, figure out from the id which describe API to call, and do it).
 * ebs snapshot creator (for all EBS volumes, trigger a snapshot).
 * Something that will pull AWS Bucket Inventory data (AWS ships it as an Athena or Hive compatible format, so you need to read a manifest.json and then pull a set of CSV or ORC files).
