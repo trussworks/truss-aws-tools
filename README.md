@@ -25,21 +25,18 @@ go get -u github.com/trussworks/truss-aws-tools/...
 ### Install dependencies (macOS)
 
 ``` shell
-brew install dep
-brew install pre-commit
-go get -u github.com/alecthomas/gometalinter
-gometalinter --install
+brew install pre-commit direnv
+go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
 ```
 
 Then run `./bin/prereqs` and follow any instructions that appear.
 
-### Install dependencies (Linux)
+### Install dependencies (Debian Linux)
 
 ``` shell
-go get -u github.com/golang/dep/cmd/dep
+sudo apt-get install direnv
 pip install pre-commit
-go get -u github.com/alecthomas/gometalinter
-gometalinter --install
+go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
 ```
 
 Then run `./bin/prereqs` and follow any instructions that appear.
