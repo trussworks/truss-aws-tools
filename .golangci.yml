@@ -1,6 +1,4 @@
 linters-settings:
-  govet:
-    check-shadowing: true
     settings:
       printf:
         funcs:
@@ -8,7 +6,6 @@ linters-settings:
           - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
           - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
           - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
-
 linters:
   enable:
      - gosec
@@ -26,9 +23,6 @@ linters:
     - gosimple # 20+ files need to be patched
     - ineffassign # 20+ files need to be patched
     - staticcheck # 30+files need to be patched
-linters-settings:
-  govet:
-    check-shadowing: false # Disabling; a couple things fail this, and it's not urgent to fix
 issues:
   fix: true
 run:
