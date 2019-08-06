@@ -29,6 +29,6 @@ jobs:
       - save_cache:
           key: go-mod-sources-v1-{{ checksum "go.sum" }}
           paths:
-            - "/go/pkg/mod"
+            - "~/go/pkg/mod"
       - store_test_results:
           path: /tmp/test-results/gotest
