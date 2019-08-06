@@ -18,12 +18,12 @@ function has() {
 
 # macOS only
 if [[ $(uname -s) = Darwin ]]; then
-    has dep "brew install dep"
+    has direnv "brew install direnv"
     has pre-commit "brew install pre-commit"
     has golangci-lint "go get -u github.com/golangci/golangci-lint/cmd/golangci-lint"
     has shellcheck "brew install shellcheck"
 else
-    has dep "go get -u github.com/golang/dep/cmd/dep"
+    has direnv "apt-get install direnv"
     has pre-commit "pip install pre-commit"
     has golangci-lint "go get -u github.com/golangci/golangci-lint/cmd/golangci-lint"
     has shellcheck "apt-get install shellcheck"

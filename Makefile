@@ -8,28 +8,22 @@ go_version: .go_version.stamp
 	bin/check_go_version
 	touch .go_version.stamp
 
-lambda_build: dep pre-commit-install test
+lambda_build: pre-commit-install test
 	bin/make-lambda-build
 
 lambda_release: lambda_build
 	bin/make-lambda-release $(S3_BUCKET) $(VERSION)
 
-install: dep pre-commit-install test
+install: pre-commit-install test
 	go install github.com/trussworks/truss-aws-tools/...
 
-test: dep pre-commit
+test: pre-commit
 	bin/make-test
 
 pre-commit: pre-commit-install
 	pre-commit run --all-files
 
-dep: go_version .dep.stamp
-
-.dep.stamp: Gopkg.lock .prereqs.stamp
-	bin/make-dep
-	touch .dep.stamp
-
-pre-commit-install: .pre-commit-install.stamp dep
+pre-commit-install: .pre-commit-install.stamp
 
 .pre-commit-install.stamp: .git/hooks/pre-commit
 	touch .pre-commit-install.stamp
@@ -46,4 +40,4 @@ prereqs: .prereqs.stamp
 clean:
 	rm -f .*.stamp *.zip
 
-.PHONY: clean go_version dep all test pre-commit pre-commit-install prereqs
+.PHONY: clean go_version all test pre-commit pre-commit-install prereqs
