@@ -6,6 +6,8 @@ linters-settings:
           - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
           - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
           - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
+      govet:
+        check-shadowing: true
 linters:
   enable:
      - gosec
@@ -17,20 +19,13 @@ linters:
      - typecheck
      - structcheck
      - deadcode
-  disable:
-    - unused #deprecated https://github.com/dominikh/go-tools/tree/master/cmd/unused
-    - errcheck #requires patching code
-    - gosimple # 20+ files need to be patched
-    - ineffassign # 20+ files need to be patched
-    - staticcheck # 30+files need to be patched
+     - errcheck
+     - gosimple
+     - ineffassign
+     - staticcheck
+     - unused
 issues:
   fix: true
 run:
   # timeout for analysis, e.g. 30s, 5m, default is 1m
   deadline: 8m
-  concurrency: 1
-
-# which dirs to skip: they won't be analyzed;
-  skip-dirs:
-    - pkg/gen
-    - mocks

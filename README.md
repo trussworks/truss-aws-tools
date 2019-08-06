@@ -26,7 +26,7 @@ go get -u github.com/trussworks/truss-aws-tools/...
 
 ``` shell
 brew install pre-commit direnv
-go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+brew install golangci/tap/golangci-lint
 ```
 
 Then run `./bin/prereqs` and follow any instructions that appear.
