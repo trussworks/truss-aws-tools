@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 
 	"github.com/aws/aws-sdk-go/service/ecs"
+	"github.com/aws/aws-sdk-go/service/ecs/ecsiface"
 	"go.uber.org/zap"
 )
 
@@ -14,7 +15,7 @@ type ECSClusterServiceDeployer struct {
 	ECSCluster string
 	ECSService string
 	Logger     *zap.Logger
-	ECSClient  *ecs.ECS
+	ECSClient  ecsiface.ECSAPI
 }
 
 // GetServiceTaskDefinition returns the primary/active task definition arn for the service/cluster combination
@@ -50,16 +51,21 @@ func (e *ECSClusterServiceDeployer) GetServiceTaskDefinition() (*ecs.TaskDefinit
 
 // RegisterUpdatedTaskDefinition registers a new task definition based on the existing service definition with updated container images and returns the new taskdefinition arn and errors
 func (e *ECSClusterServiceDeployer) RegisterUpdatedTaskDefinition(taskDefinition *ecs.TaskDefinition, containerMap map[string]map[string]string) (*ecs.TaskDefinition, error) {
+
+	newContainerDefs := make([]*ecs.ContainerDefinition, len(taskDefinition.ContainerDefinitions))
 	for containerName := range containerMap {
+		// this range loops over existing ContainerDefs and only updates Defs that are
+		// present in the containerMap...this does not remove container from
 		for idx, containerDefinition := range taskDefinition.ContainerDefinitions {
+			newContainerDefs[idx] = containerDefinition
 			if containerName == *containerDefinition.Name {
-				*taskDefinition.ContainerDefinitions[idx].Image = containerMap[containerName]["image"]
+				newImage := containerMap[containerName]["image"]
+				newContainerDefs[idx].Image = &newImage
 			}
 		}
 	}
-
 	input := &ecs.RegisterTaskDefinitionInput{
-		ContainerDefinitions:    taskDefinition.ContainerDefinitions,
+		ContainerDefinitions:    newContainerDefs,
 		Cpu:                     taskDefinition.Cpu,
 		ExecutionRoleArn:        taskDefinition.ExecutionRoleArn,
 		Family:                  taskDefinition.Family,
