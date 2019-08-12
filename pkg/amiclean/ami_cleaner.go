@@ -51,10 +51,11 @@ func (a *AMIClean) GetImages() (*ec2.DescribeImagesOutput, error) {
 // within an image.
 func matchTags(image *ec2.Image, tag *ec2.Tag) (bool, *ec2.Tag) {
 	for _, imageTag := range image.Tags {
-		if *tag.Key == *imageTag.Key {
-			if *tag.Value == *imageTag.Value {
+		if *tag.Key == "" || *tag.Key == *imageTag.Key {
+			if *tag.Value == "" || *tag.Value == *imageTag.Value {
 				// If the tag exists, and has the value we're
-				// looking for, return true and the image tag.
+				// looking for or we don't need match the tag,
+				// return true and the image tag.
 				return true, imageTag
 			}
 			// If the tag exists, and doesn't have the
