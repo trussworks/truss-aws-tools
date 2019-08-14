@@ -25,6 +25,10 @@ var newMasterImage = &ec2.Image{
 				SnapshotId: aws.String("snap-11111111111111111"),
 			},
 		},
+		{
+			DeviceName:  aws.String("/dev/sdb"),
+			VirtualName: aws.String("ephemeral0"),
+		},
 	},
 	RootDeviceType: aws.String("ebs"),
 }
@@ -51,6 +55,14 @@ var newishDevImage = &ec2.Image{
 				SnapshotId: aws.String("snap-22222222222222223"),
 			},
 		},
+		{
+			DeviceName:  aws.String("/dev/sdb"),
+			VirtualName: aws.String("ephemeral0"),
+		},
+		{
+			DeviceName:  aws.String("/dev/sdc"),
+			VirtualName: aws.String("ephemeral1"),
+		},
 	},
 	RootDeviceType: aws.String("ebs"),
 }
@@ -71,6 +83,10 @@ var oldDevImage = &ec2.Image{
 			Ebs: &ec2.EbsBlockDevice{
 				SnapshotId: aws.String("snap-33333333333333333"),
 			},
+		},
+		{
+			DeviceName:  aws.String("/dev/sdb"),
+			VirtualName: aws.String("ephemeral0"),
 		},
 	},
 	RootDeviceType: aws.String("ebs"),
