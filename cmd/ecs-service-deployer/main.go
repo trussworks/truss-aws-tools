@@ -23,7 +23,6 @@ type Options struct {
 
 	Args struct {
 		ContainerJSON string
-		Rest          []string
 	} `positional-args:"yes" required:"yes"`
 }
 
