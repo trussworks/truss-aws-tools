@@ -73,7 +73,7 @@ func (suite *GetTaskDefinitionSuite) SetupTest() {
 func (suite *GetTaskDefinitionSuite) TestGetServiceTaskDefinition() {
 	serviceOutput := ecs.DescribeServicesOutput{
 		Services: []*ecs.Service{
-			&ecs.Service{
+			{
 				TaskDefinition: &suite.taskDef,
 			}},
 	}
@@ -119,7 +119,7 @@ func (suite *GetTaskDefinitionSuite) TestGetServiceTaskDefinitionNoMatchingServi
 func (suite *GetTaskDefinitionSuite) TestGetServiceTaskDefinitionDescribeTaskFails() {
 	serviceOutput := ecs.DescribeServicesOutput{
 		Services: []*ecs.Service{
-			&ecs.Service{
+			{
 				TaskDefinition: &suite.taskDef,
 			}},
 	}
