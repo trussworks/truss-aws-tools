@@ -1,10 +1,16 @@
-#! /bin/sh
+#!/usr/bin/env bash
+
+set -eu -o pipefail
 
 go_test_output="/tmp/go-test.out"
 
 go test -v github.com/trussworks/truss-aws-tools/... | tee "${go_test_output}"
 
-if [ -n "$CIRCLECI" ]; then
+
+# Check if we are running tests inside of CircleCI by checking for a $CIRCLECI
+# environment variable. The dash after $CIRCLECI substitutes a null value if
+# CIRCLECI is unset. This prevents unbound variable errors
+if [[ -n ${CIRCLECI-} ]]; then
     mkdir -p "${TEST_RESULTS}"/gotest
     go-junit-report < "${go_test_output}" \
                     > "${TEST_RESULTS}/gotest/go-test-report.xml"
