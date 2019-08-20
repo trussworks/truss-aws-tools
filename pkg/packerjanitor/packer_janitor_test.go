@@ -157,7 +157,7 @@ func TestGetPackerInstancesSuccess(t *testing.T) {
 
 	testSet, err := p.GetPackerInstances()
 
-	if err == nil {
+	if err != nil {
 		t.Errorf("ERROR: GetPackerInstances threw error during successful test")
 	}
 
