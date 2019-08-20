@@ -6,7 +6,7 @@ go_test_output="/tmp/go-test.out"
 
 go test -v github.com/trussworks/truss-aws-tools/... | tee "${go_test_output}"
 
-if [[ -z ${CIRCLECI-} ]]; then
+if [[ -n ${CIRCLECI-} ]]; then
     mkdir -p "${TEST_RESULTS}"/gotest
     go-junit-report < "${go_test_output}" \
                     > "${TEST_RESULTS}/gotest/go-test-report.xml"
