@@ -111,6 +111,9 @@ func TestCheckImage(t *testing.T) {
 		{testImages, "devimage", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("master")}, true, 1, []bool{false, true, true, false}},
 		{testImages, "", &ec2.Tag{Key: aws.String("Foozle"), Value: aws.String("Whatsit")}, false, 1, []bool{false, false, false, true}},
 		{testImages, "", &ec2.Tag{Key: aws.String("Foozle"), Value: aws.String("Whatsit")}, true, 0, []bool{true, true, true, false}},
+		{testImages, "", nil, true, 0, []bool{true, true, true, false}},
+		{testImages, "", nil, false, 1, []bool{true, false, true, false}},
+		{testImages, "testimage", nil, false, 10, []bool{true, false, true, true}},
 	}
 
 	for _, table := range tables {
