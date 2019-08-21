@@ -3,7 +3,7 @@ module github.com/trussworks/truss-aws-tools
 go 1.12
 
 require (
-	github.com/aws/aws-lambda-go v1.12.1
+	github.com/aws/aws-lambda-go v1.13.0
 	github.com/aws/aws-sdk-go v1.23.4
 	github.com/ejholmes/cloudwatch v0.0.0-20170420022600-c2bae568a254
 	github.com/jessevdk/go-flags v1.4.0
