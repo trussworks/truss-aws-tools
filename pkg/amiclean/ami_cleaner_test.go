@@ -89,7 +89,24 @@ var noEbsImage = &ec2.Image{
 	RootDeviceType: aws.String("instance-store"),
 }
 
-var testImages = []*ec2.Image{newMasterImage, newishDevImage, oldDevImage, noEbsImage}
+var noTagImage = &ec2.Image{
+	Name:         aws.String("notagimage-beta"),
+	Description:  aws.String("No Tag Image"),
+	ImageId:      aws.String("ami-555555555555555555"),
+	CreationDate: aws.String("2019-03-01T21:04:57.000Z"),
+	Tags:         nil,
+	BlockDeviceMappings: []*ec2.BlockDeviceMapping{
+		{
+			DeviceName: aws.String("/dev/xvda"),
+			Ebs: &ec2.EbsBlockDevice{
+				SnapshotId: aws.String("snap-55555555555555555"),
+			},
+		},
+	},
+	RootDeviceType: aws.String("ebs"),
+}
+
+var testImages = []*ec2.Image{newMasterImage, newishDevImage, oldDevImage, noEbsImage, noTagImage}
 
 var now = time.Date(2019, 4, 1, 0, 0, 0, 0, time.UTC)
 
@@ -104,16 +121,16 @@ func TestCheckImage(t *testing.T) {
 		RetentionDays int
 		resultSet     []bool
 	}{
-		{testImages, "", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("master")}, false, 1, []bool{false, false, false, false}},
-		{testImages, "", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("development")}, false, 30, []bool{false, false, true, false}},
-		{testImages, "", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("development")}, false, 1, []bool{false, true, true, false}},
-		{testImages, "", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("master")}, true, 1, []bool{false, true, true, true}},
-		{testImages, "devimage", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("master")}, true, 1, []bool{false, true, true, false}},
-		{testImages, "", &ec2.Tag{Key: aws.String("Foozle"), Value: aws.String("Whatsit")}, false, 1, []bool{false, false, false, true}},
-		{testImages, "", &ec2.Tag{Key: aws.String("Foozle"), Value: aws.String("Whatsit")}, true, 0, []bool{true, true, true, false}},
-		{testImages, "", nil, true, 0, []bool{true, true, true, false}},
-		{testImages, "", nil, false, 1, []bool{true, false, true, false}},
-		{testImages, "testimage", nil, false, 10, []bool{true, false, true, true}},
+		{testImages, "", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("master")}, false, 1, []bool{false, false, false, false, false}},
+		{testImages, "", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("development")}, false, 30, []bool{false, false, true, false, false}},
+		{testImages, "", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("development")}, false, 1, []bool{false, true, true, false, false}},
+		{testImages, "", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("master")}, true, 1, []bool{false, true, true, true, true}},
+		{testImages, "devimage", &ec2.Tag{Key: aws.String("Branch"), Value: aws.String("master")}, true, 1, []bool{false, true, true, false, false}},
+		{testImages, "", &ec2.Tag{Key: aws.String("Foozle"), Value: aws.String("Whatsit")}, false, 1, []bool{false, false, false, true, false}},
+		{testImages, "", &ec2.Tag{Key: aws.String("Foozle"), Value: aws.String("Whatsit")}, true, 0, []bool{true, true, true, false, true}},
+		{testImages, "notagimage", &ec2.Tag{Key: aws.String(""), Value: aws.String("")}, true, 0, []bool{false, false, false, false, true}},
+		{testImages, "", &ec2.Tag{Key: aws.String(""), Value: aws.String("")}, false, 1, []bool{false, true, true, true, false}},
+		{testImages, "testimage", &ec2.Tag{Key: aws.String(""), Value: aws.String("")}, false, 10, []bool{false, false, false, false, false}},
 	}
 
 	for _, table := range tables {
