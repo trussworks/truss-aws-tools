@@ -103,7 +103,7 @@ func (suite *GetTaskDefinitionSuite) TestGetServiceTaskDefinitionServicesFailed(
 	suite.ecsMockClient.AssertExpectations(suite.T())
 }
 
-// TestGetServiceTaskDefinitionNoMatchingServices test when service serach return no matching services
+// TestGetServiceTaskDefinitionNoMatchingServices test when service search return no matching services
 func (suite *GetTaskDefinitionSuite) TestGetServiceTaskDefinitionNoMatchingServices() {
 	output := ecs.DescribeServicesOutput{
 		Services: make([]*ecs.Service, 0),
@@ -224,7 +224,7 @@ func TestRegisterUpdatedTaskDefinition(t *testing.T) {
 	suite.Run(t, new(RegisterUpdatedTaskDefinitionSuite))
 }
 
-// TestUpdateServiceError tests the case where the ECS API call throws an error
+// TestUpdateServiceError tests the case where the ECS API has no issues
 func (suite *RegisterUpdatedTaskDefinitionSuite) TestRegisterUpdatedTaskDefinition() {
 	output := ecs.RegisterTaskDefinitionOutput{}
 
@@ -247,6 +247,8 @@ func (suite *RegisterUpdatedTaskDefinitionSuite) TestRegisterUpdatedTaskDefiniti
 	}
 
 	resp, err := suite.e.RegisterUpdatedTaskDefinition(&taskDef, suite.containerMap)
+	// When working this will return nil since we are returning an empty output.TaskDefinition
+	// defined at the start of this fun
 	assert.Nil(suite.T(), resp)
 	assert.Nil(suite.T(), err)
 
@@ -278,7 +280,12 @@ func (suite *RegisterUpdatedTaskDefinitionSuite) TestRegisterUpdatedTaskDefiniti
 	taskDef.ContainerDefinitions[0].SetName("blah")
 
 	resp, err := suite.e.RegisterUpdatedTaskDefinition(&taskDef, suite.containerMap)
+	// When working this will return nil since we are returning an empty output.TaskDefinition
+	// defined at the start of this fun
 	assert.Nil(suite.T(), resp)
+	// This shouldn't be a valid error since the original taskDef will ignore the mismatched name.
+	// This way if the provided TaskDef and ECS TaskDef mismatch, ECS wins not taking down a service
+	// due to typo.
 	assert.Nil(suite.T(), err)
 
 	suite.ecsMockClient.AssertExpectations(suite.T())
