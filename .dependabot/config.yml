@@ -4,3 +4,9 @@ update_configs:
   - package_manager: "go:modules"
     directory: "/"
     update_schedule: "weekly"
+    # Apply default reviewer legendary-waddle group to PRs
+    default_reviewers:
+      - "legendary-waddle@noreply.github.com"
+    # Apply dependencies label to PRs
+    default_labels:
+      - "dependencies"
