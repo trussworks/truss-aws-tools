@@ -21,7 +21,7 @@ type Options struct {
 	Lambda               bool   `long:"lambda" description:"Run as an AWS lambda function." required:"false" env:"LAMBDA"`
 	Profile              string `long:"profile" description:"The AWS profile to use." required:"false" env:"PROFILE"`
 	Region               string `long:"region" description:"The AWS region to use." required:"false" env:"REGION"`
-	StartTime            string `long:"start-time" description:"The log file start time." required:"true" choice:"1h" choice:"1d" env:"START_TIME"`
+	StartTime            string `long:"start-time" description:"The log file start time." required:"true" choice:"1h" env:"START_TIME"`
 }
 
 var options Options
