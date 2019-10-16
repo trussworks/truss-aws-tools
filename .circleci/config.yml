@@ -5,7 +5,6 @@ jobs:
       - image: trussworks/circleci-docker-primary:0f54e1d0b033fd7639ae287ecd4445b4aa9bd37a
         environment:
           - TEST_RESULTS: /tmp/test-results
-          - GO111MODULE: auto
     steps:
       - checkout
       - restore_cache:
