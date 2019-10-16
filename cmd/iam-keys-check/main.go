@@ -9,12 +9,11 @@ import (
 	"sort"
 	"strings"
 	"time"
-)
 
-import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/iam"
+
 	flag "github.com/jessevdk/go-flags"
 	"github.com/lytics/slackhook"
 	"github.com/trussworks/truss-aws-tools/internal/aws/session"
