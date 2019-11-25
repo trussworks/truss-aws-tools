@@ -4,7 +4,7 @@ go 1.13.1
 
 require (
 	github.com/aws/aws-lambda-go v1.13.3
-	github.com/aws/aws-sdk-go v1.25.36
+	github.com/aws/aws-sdk-go v1.25.41
 	github.com/ejholmes/cloudwatch v0.0.0-20170420022600-c2bae568a254
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/lytics/slackhook v0.0.0-20160630154540-a52fd449b27d
