@@ -4,6 +4,7 @@ AWS tools that come in handy.
 
 | Tool                    | Description                                                                                              | AWS Lambda Support  |
 |-------------------------|----------------------------------------------------------------------------------------------------------|---------------------|
+| aws-remove-user         | Remove an AWS User's access keys and MFA devices.                                                        | N/A                 |
 | ebs-delete              | snapshots an EBS volume before deleting, and won't delete volumes that belong to CloudFormation stacks.  | No                  |
 | iam-keys-check          | checks users for old access keys and sends notification to a Slack webhook url                           | Yes                 |
 | rds-snapshot-cleaner    | removes manual snapshot for a RDS instance that are older than X days or over a maximum snapshot count.  | Yes                 |
