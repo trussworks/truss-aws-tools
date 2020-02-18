@@ -1,0 +1,71 @@
+#! /usr/bin/env bash
+
+set -eu -o pipefail
+
+#
+#  Remove an AWS User's access keys and MFA devices
+#
+
+usage() {
+    echo "Usage: ${0##*/} <username>"
+    exit 1
+}
+[[ $# -lt 1 ]] && usage
+
+readonly USERNAME=$1
+
+while true; do
+  read -rp "Do you wish to remove AWS IAM creds for user '${USERNAME}'? " yn
+  case $yn in
+    [Yy]* ) break;;
+    [Nn]* ) exit;;
+    * ) echo "Please answer yes or no.";;
+  esac
+done
+
+if ! aws iam get-user --user-name "${USERNAME}" > /dev/null 2>&1; then
+    echo
+    echo "User '${USERNAME}' DOES NOT exist in AWS IAM"
+    exit 1
+fi
+
+echo
+echo "Begin removing AWS IAM MFA devices and Access Keys for ${USERNAME}"
+
+#
+# Remove MFA Devices First
+#
+
+MFA_DEVICES=$(aws iam list-mfa-devices --user-name "${USERNAME}" | jq -r ".MFADevices")
+DEVICE_COUNT=$(jq ". | length" <<< "${MFA_DEVICES}")
+
+case $DEVICE_COUNT in
+  0)
+    echo "No MFA devices to delete"
+    ;;
+  1)
+    SERIAL=$(jq -r ".[0].SerialNumber" <<< "${MFA_DEVICES}")
+    echo "Deactivating MFA device with serial ${SERIAL}"
+    aws iam deactivate-mfa-device --user-name "${USERNAME}" --serial-number "${SERIAL}"
+    echo "Deleting MFA device with serial ${SERIAL}"
+    aws iam delete-virtual-mfa-device --serial-number "${SERIAL}"
+    ;;
+  *)
+    echo "User '${USERNAME}' has ${DEVICE_COUNT} MFA devices. Expected 1 or 0."
+    exit 1
+    ;;
+esac
+
+#
+# Remove Access Keys
+#
+
+ACCESS_KEYS=$(aws iam list-access-keys --user-name maz | jq -r ".AccessKeyMetadata[].AccessKeyId")
+if [ -z "${ACCESS_KEYS}" ]; then
+  echo "No Access Keys to delete"
+else
+  for key in ${ACCESS_KEYS}; do
+    echo "Deleting Access Key ID ${key}"
+    aws iam delete-access-key --user-name "${USERNAME}" --access-key-id "${key}"
+  done
+fi
