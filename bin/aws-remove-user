@@ -60,7 +60,7 @@ esac
 # Remove Access Keys
 #
 
-ACCESS_KEYS=$(aws iam list-access-keys --user-name maz | jq -r ".AccessKeyMetadata[].AccessKeyId")
+ACCESS_KEYS=$(aws iam list-access-keys --user-name "${USERNAME}" | jq -r ".AccessKeyMetadata[].AccessKeyId")
 if [ -z "${ACCESS_KEYS}" ]; then
   echo "No Access Keys to delete"
 else
