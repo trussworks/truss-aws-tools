@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: trussworks/circleci-docker-primary:0f54e1d0b033fd7639ae287ecd4445b4aa9bd37a
+      - image: trussworks/circleci-docker-primary:9aeb08028f7d8413a463f4642526ab6a6e18832b
         environment:
           - TEST_RESULTS: /tmp/test-results
     steps:
