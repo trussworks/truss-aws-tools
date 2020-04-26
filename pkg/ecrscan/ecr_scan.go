@@ -20,8 +20,7 @@ type Target struct {
 }
 
 type Report struct {
-	Score         string `json:"score"`
-	TotalFindings int    `json:"totalFindings"`
+	TotalFindings int `json:"totalFindings"`
 }
 
 type Evaluator struct {
@@ -116,16 +115,8 @@ func (e *Evaluator) getImageFindings(target *Target) (*ecr.DescribeImageScanFind
 }
 
 func (e *Evaluator) generateReport(findings *ecr.ImageScanFindings) *Report {
-	totalFindings := e.calculateTotalFindings(findings)
-	var score string
-	if totalFindings == 0 {
-		score = "PASS"
-	} else {
-		score = "FAIL"
-	}
 	return &Report{
-		TotalFindings: totalFindings,
-		Score:         score,
+		TotalFindings: e.calculateTotalFindings(findings),
 	}
 }
 

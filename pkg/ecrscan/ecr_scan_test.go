@@ -69,7 +69,6 @@ var testFindings = []struct {
 		},
 		Report{
 			TotalFindings: 0,
-			Score:         "PASS",
 		},
 		0,
 	},
@@ -87,7 +86,6 @@ var testFindings = []struct {
 		},
 		Report{
 			TotalFindings: 1,
-			Score:         "FAIL",
 		},
 		1,
 	},
@@ -106,7 +104,6 @@ var testFindings = []struct {
 		},
 		Report{
 			TotalFindings: 1,
-			Score:         "FAIL",
 		},
 		1,
 	},
@@ -124,7 +121,6 @@ var testFindings = []struct {
 		},
 		Report{
 			TotalFindings: 6,
-			Score:         "FAIL",
 		},
 		6,
 	},
@@ -142,7 +138,6 @@ var testFindings = []struct {
 		},
 		Report{
 			TotalFindings: 136,
-			Score:         "FAIL",
 		},
 		136,
 	},
