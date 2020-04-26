@@ -214,7 +214,7 @@ func TestIsOldScan(t *testing.T) {
 	for _, tt := range tests {
 		testname := tt.description
 		t.Run(testname, func(t *testing.T) {
-			result := evaluator.IsOldScan(tt.findings)
+			result := evaluator.isOldScan(tt.findings)
 			if result != tt.expected {
 				t.Errorf("got %v, want %v", result, tt.expected)
 			}
@@ -226,7 +226,7 @@ func TestCalculateTotalFindings(t *testing.T) {
 	for _, tt := range testFindings {
 		testname := tt.description
 		t.Run(testname, func(t *testing.T) {
-			total := evaluator.CalculateTotalFindings(tt.findings)
+			total := evaluator.calculateTotalFindings(tt.findings)
 			if total != tt.expectedTotal {
 				t.Errorf("got %d, want %d", total, tt.expectedTotal)
 			}
@@ -238,7 +238,7 @@ func TestGenerateReport(t *testing.T) {
 	for _, tt := range testFindings {
 		testname := tt.description
 		t.Run(testname, func(t *testing.T) {
-			report := evaluator.GenerateReport(tt.findings)
+			report := evaluator.generateReport(tt.findings)
 			if !cmp.Equal(*report, tt.expectedReport) {
 				t.Errorf("got %+v, want %+v", *report, tt.expectedReport)
 			}
@@ -272,7 +272,7 @@ func TestGetImageFindings(t *testing.T) {
 	for _, tt := range tests {
 		testname := tt.description
 		t.Run(testname, func(t *testing.T) {
-			findings, _ := evaluator.GetImageFindings(tt.target)
+			findings, _ := evaluator.getImageFindings(tt.target)
 			if findings != tt.expected {
 				t.Errorf("got %+v, want %+v", *findings, *tt.expected)
 			}
