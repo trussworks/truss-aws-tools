@@ -27,20 +27,6 @@ type Evaluator struct {
 	ECRClient  ecriface.ECRAPI
 }
 
-func (e *Evaluator) scan(target *Target) {
-	e.Logger.Info("Scanning image")
-	_, err := e.ECRClient.StartImageScan(&ecr.StartImageScanInput{
-		ImageId: &ecr.ImageIdentifier{
-			ImageTag: aws.String(target.ImageTag),
-		},
-		RepositoryName: aws.String(target.Repository),
-	})
-	if err != nil {
-		e.Logger.Fatal("Unable to start image scan",
-			zap.String("error", err.Error()))
-	}
-}
-
 func (e *Evaluator) Evaluate(target *Target) (*Report, error) {
 	e.Logger.Info("Evaluating image",
 		zap.String("repository", target.Repository),
@@ -60,6 +46,20 @@ func (e *Evaluator) Evaluate(target *Target) (*Report, error) {
 		e.Logger.Info("Generating scan report")
 	}
 	return e.generateReport(findings.ImageScanFindings), nil
+}
+
+func (e *Evaluator) scan(target *Target) {
+	e.Logger.Info("Scanning image")
+	_, err := e.ECRClient.StartImageScan(&ecr.StartImageScanInput{
+		ImageId: &ecr.ImageIdentifier{
+			ImageTag: aws.String(target.ImageTag),
+		},
+		RepositoryName: aws.String(target.Repository),
+	})
+	if err != nil {
+		e.Logger.Fatal("Unable to start image scan",
+			zap.String("error", err.Error()))
+	}
 }
 
 func (e *Evaluator) getImageFindings(target *Target) (*ecr.DescribeImageScanFindingsOutput, error) {
