@@ -279,3 +279,36 @@ func TestGetImageFindings(t *testing.T) {
 		})
 	}
 }
+
+func TestEvaluateWithBadInput(t *testing.T) {
+	tests := []struct {
+		description string
+		target      *Target
+	}{
+		{
+			"Nil target",
+			nil,
+		},
+		{
+			"No repository",
+			&Target{
+				ImageTag: "test123",
+			},
+		},
+		{
+			"No image tag",
+			&Target{
+				Repository: "testrepo",
+			},
+		},
+	}
+	for _, tt := range tests {
+		testname := tt.description
+		t.Run(testname, func(t *testing.T) {
+			report, err := evaluator.Evaluate(tt.target)
+			if err == nil {
+				t.Errorf("got %+v, want error", *report)
+			}
+		})
+	}
+}

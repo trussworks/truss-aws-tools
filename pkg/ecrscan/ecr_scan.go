@@ -8,12 +8,15 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/ecr/ecriface"
+	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 )
 
+var validate *validator.Validate
+
 type Target struct {
-	Repository string `json:"repository"`
-	ImageTag   string `json:"imageTag"`
+	Repository string `json:"repository" validate:"required"`
+	ImageTag   string `json:"imageTag" validate:"required"`
 }
 
 type Report struct {
@@ -28,6 +31,12 @@ type Evaluator struct {
 }
 
 func (e *Evaluator) Evaluate(target *Target) (*Report, error) {
+	validate = validator.New()
+	err := validate.Struct(target)
+	if err != nil {
+		e.Logger.Error("Invalid input", zap.Error(err))
+		return nil, errors.New("Invalid target")
+	}
 	e.Logger.Info("Evaluating image",
 		zap.String("repository", target.Repository),
 		zap.String("imageTag", target.ImageTag))
