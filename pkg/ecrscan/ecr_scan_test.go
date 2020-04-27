@@ -285,6 +285,10 @@ func TestEvaluateWithBadInput(t *testing.T) {
 			nil,
 		},
 		{
+			"Empty target",
+			&Target{},
+		},
+		{
 			"No repository",
 			&Target{
 				ImageTag: "test123",
