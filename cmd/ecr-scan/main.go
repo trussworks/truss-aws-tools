@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/service/ecr"
@@ -41,7 +42,7 @@ func evaluateImage() (string, error) {
 	}
 	logger.Info("Scan result",
 		zap.Int("totalFindings", scanResult.TotalFindings))
-	return string(scanResult.TotalFindings), nil
+	return strconv.Itoa(scanResult.TotalFindings), nil
 }
 
 func HandleRequest(ctx context.Context, target ecrscan.Target) (string, error) {
