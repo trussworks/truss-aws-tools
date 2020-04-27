@@ -40,9 +40,8 @@ func evaluateImage() (string, error) {
 		return "", err
 	}
 	logger.Info("Scan result",
-		zap.String("score", scanResult.Score),
 		zap.Int("totalFindings", scanResult.TotalFindings))
-	return scanResult.Score, nil
+	return string(scanResult.TotalFindings), nil
 }
 
 func HandleRequest(ctx context.Context, target ecrscan.Target) (string, error) {
