@@ -34,30 +34,16 @@ func relativeTimePointer(hours float64) *time.Time {
 }
 
 func (m *mockECRClient) DescribeImageScanFindings(input *ecr.DescribeImageScanFindingsInput) (*ecr.DescribeImageScanFindingsOutput, error) {
-	if _, ok := testFindingsOutput[*input.ImageId.ImageTag]; ok {
-		return testFindingsOutput[*input.ImageId.ImageTag], nil
+	if _, ok := testCases[*input.ImageId.ImageTag]; ok {
+		return testCases[*input.ImageId.ImageTag], nil
 	} else {
 		return nil, errors.New("error")
 	}
 }
 
-var testFindingsOutput = map[string]*ecr.DescribeImageScanFindingsOutput{
-	"test100": &ecr.DescribeImageScanFindingsOutput{
-		ImageScanStatus: &ecr.ImageScanStatus{
-			Status: aws.String(ecr.ScanStatusComplete),
-		},
-	},
-}
-
-var testFindings = []struct {
-	description    string
-	findings       *ecr.ImageScanFindings
-	expectedReport Report
-	expectedTotal  int
-}{
-	{
-		"Scan with no findings",
-		&ecr.ImageScanFindings{
+var testCases = map[string]*ecr.DescribeImageScanFindingsOutput{
+	"ScanCompletedNoFindings": &ecr.DescribeImageScanFindingsOutput{
+		ImageScanFindings: &ecr.ImageScanFindings{
 			FindingSeverityCounts: map[string]*int64{
 				ecr.FindingSeverityUndefined:     aws.Int64(0),
 				ecr.FindingSeverityInformational: aws.Int64(0),
@@ -66,15 +52,14 @@ var testFindings = []struct {
 				ecr.FindingSeverityHigh:          aws.Int64(0),
 				ecr.FindingSeverityCritical:      aws.Int64(0),
 			},
+			ImageScanCompletedAt: relativeTimePointer(1),
 		},
-		Report{
-			TotalFindings: 0,
+		ImageScanStatus: &ecr.ImageScanStatus{
+			Status: aws.String(ecr.ScanStatusComplete),
 		},
-		0,
 	},
-	{
-		"Scan with 1 undefined finding",
-		&ecr.ImageScanFindings{
+	"ScanCompletedOneUndefinedFinding": &ecr.DescribeImageScanFindingsOutput{
+		ImageScanFindings: &ecr.ImageScanFindings{
 			FindingSeverityCounts: map[string]*int64{
 				ecr.FindingSeverityUndefined:     aws.Int64(1),
 				ecr.FindingSeverityInformational: aws.Int64(0),
@@ -83,16 +68,14 @@ var testFindings = []struct {
 				ecr.FindingSeverityHigh:          aws.Int64(0),
 				ecr.FindingSeverityCritical:      aws.Int64(0),
 			},
+			ImageScanCompletedAt: relativeTimePointer(1),
 		},
-		Report{
-			TotalFindings: 1,
+		ImageScanStatus: &ecr.ImageScanStatus{
+			Status: aws.String(ecr.ScanStatusComplete),
 		},
-		1,
 	},
-	{
-		"Scan with 1 critical finding",
-		&ecr.ImageScanFindings{
-
+	"ScanCompletedOneCriticalFinding": &ecr.DescribeImageScanFindingsOutput{
+		ImageScanFindings: &ecr.ImageScanFindings{
 			FindingSeverityCounts: map[string]*int64{
 				ecr.FindingSeverityUndefined:     aws.Int64(0),
 				ecr.FindingSeverityInformational: aws.Int64(0),
@@ -101,15 +84,15 @@ var testFindings = []struct {
 				ecr.FindingSeverityHigh:          aws.Int64(0),
 				ecr.FindingSeverityCritical:      aws.Int64(1),
 			},
+			ImageScanCompletedAt: relativeTimePointer(1),
 		},
-		Report{
-			TotalFindings: 1,
+		ImageScanStatus: &ecr.ImageScanStatus{
+			Status: aws.String(ecr.ScanStatusComplete),
 		},
-		1,
 	},
-	{
-		"Scan with 1 finding in each category",
-		&ecr.ImageScanFindings{
+
+	"ScanCompletedOneFindingEachCategory": &ecr.DescribeImageScanFindingsOutput{
+		ImageScanFindings: &ecr.ImageScanFindings{
 			FindingSeverityCounts: map[string]*int64{
 				ecr.FindingSeverityUndefined:     aws.Int64(1),
 				ecr.FindingSeverityInformational: aws.Int64(1),
@@ -118,15 +101,14 @@ var testFindings = []struct {
 				ecr.FindingSeverityHigh:          aws.Int64(1),
 				ecr.FindingSeverityCritical:      aws.Int64(1),
 			},
+			ImageScanCompletedAt: relativeTimePointer(1),
 		},
-		Report{
-			TotalFindings: 6,
+		ImageScanStatus: &ecr.ImageScanStatus{
+			Status: aws.String(ecr.ScanStatusComplete),
 		},
-		6,
 	},
-	{
-		"Scan with multiple findings in each category",
-		&ecr.ImageScanFindings{
+	"ScanCompletedMultipleFindingsEachCategory": &ecr.DescribeImageScanFindingsOutput{
+		ImageScanFindings: &ecr.ImageScanFindings{
 			FindingSeverityCounts: map[string]*int64{
 				ecr.FindingSeverityUndefined:     aws.Int64(5),
 				ecr.FindingSeverityInformational: aws.Int64(8),
@@ -135,14 +117,112 @@ var testFindings = []struct {
 				ecr.FindingSeverityHigh:          aws.Int64(34),
 				ecr.FindingSeverityCritical:      aws.Int64(55),
 			},
+			ImageScanCompletedAt: relativeTimePointer(1),
 		},
-		Report{
-			TotalFindings: 136,
+		ImageScanStatus: &ecr.ImageScanStatus{
+			Status: aws.String(ecr.ScanStatusComplete),
 		},
-		136,
 	},
 }
 
+func TestEvaluate(t *testing.T) {
+	tests := []struct {
+		target   *Target
+		expected *Report
+	}{
+		{
+			&Target{
+				ImageTag:   "ScanCompletedNoFindings",
+				Repository: "test-repo",
+			},
+			&Report{
+				TotalFindings: 0,
+			},
+		},
+		{
+			&Target{
+				ImageTag:   "ScanCompletedOneUndefinedFinding",
+				Repository: "test-repo",
+			},
+			&Report{
+				TotalFindings: 1,
+			},
+		},
+		{
+			&Target{
+				ImageTag:   "ScanCompletedOneCriticalFinding",
+				Repository: "test-repo",
+			},
+			&Report{
+				TotalFindings: 1,
+			},
+		},
+		{
+			&Target{
+				ImageTag:   "ScanCompletedOneFindingEachCategory",
+				Repository: "test-repo",
+			},
+			&Report{
+				TotalFindings: 6,
+			},
+		},
+		{
+			&Target{
+				ImageTag:   "ScanCompletedMultipleFindingsEachCategory",
+				Repository: "test-repo",
+			},
+			&Report{
+				TotalFindings: 136,
+			},
+		},
+	}
+	for _, tt := range tests {
+		testname := tt.target.ImageTag
+		t.Run(testname, func(t *testing.T) {
+			report, _ := evaluator.Evaluate(tt.target)
+			if !cmp.Equal(report, tt.expected) {
+				t.Errorf("got %+v, want %+v", *report, *tt.expected)
+			}
+		})
+	}
+}
+
+func TestEvaluateWithBadInput(t *testing.T) {
+	tests := []struct {
+		description string
+		target      *Target
+	}{
+		{
+			"Nil target",
+			nil,
+		},
+		{
+			"Empty target",
+			&Target{},
+		},
+		{
+			"No repository",
+			&Target{
+				ImageTag: "test123",
+			},
+		},
+		{
+			"No image tag",
+			&Target{
+				Repository: "testrepo",
+			},
+		},
+	}
+	for _, tt := range tests {
+		testname := tt.description
+		t.Run(testname, func(t *testing.T) {
+			report, err := evaluator.Evaluate(tt.target)
+			if err == nil {
+				t.Errorf("got %+v, want error", *report)
+			}
+		})
+	}
+}
 func TestIsOldScan(t *testing.T) {
 	tests := []struct {
 		description string
@@ -218,24 +298,37 @@ func TestIsOldScan(t *testing.T) {
 }
 
 func TestCalculateTotalFindings(t *testing.T) {
-	for _, tt := range testFindings {
-		testname := tt.description
-		t.Run(testname, func(t *testing.T) {
-			total := evaluator.calculateTotalFindings(tt.findings)
-			if total != tt.expectedTotal {
-				t.Errorf("got %d, want %d", total, tt.expectedTotal)
-			}
-		})
+	tests := []struct {
+		description string
+		expected    int
+	}{
+		{
+			"ScanCompletedNoFindings",
+			0,
+		},
+		{
+			"ScanCompletedOneUndefinedFinding",
+			1,
+		},
+		{
+			"ScanCompletedOneCriticalFinding",
+			1,
+		},
+		{
+			"ScanCompletedOneFindingEachCategory",
+			6,
+		},
+		{
+			"ScanCompletedMultipleFindingsEachCategory",
+			136,
+		},
 	}
-}
-
-func TestGenerateReport(t *testing.T) {
-	for _, tt := range testFindings {
+	for _, tt := range tests {
 		testname := tt.description
 		t.Run(testname, func(t *testing.T) {
-			report := evaluator.generateReport(tt.findings)
-			if !cmp.Equal(*report, tt.expectedReport) {
-				t.Errorf("got %+v, want %+v", *report, tt.expectedReport)
+			total := evaluator.calculateTotalFindings(testCases[tt.description].ImageScanFindings)
+			if total != tt.expected {
+				t.Errorf("got %d, want %d", total, tt.expected)
 			}
 		})
 	}
@@ -261,7 +354,7 @@ func TestGetImageFindings(t *testing.T) {
 				ImageTag:   "test100",
 				Repository: "testrepo",
 			},
-			testFindingsOutput["test100"],
+			testCases["test100"],
 		},
 	}
 	for _, tt := range tests {
@@ -270,43 +363,6 @@ func TestGetImageFindings(t *testing.T) {
 			findings, _ := evaluator.getImageFindings(tt.target)
 			if findings != tt.expected {
 				t.Errorf("got %+v, want %+v", *findings, *tt.expected)
-			}
-		})
-	}
-}
-
-func TestEvaluateWithBadInput(t *testing.T) {
-	tests := []struct {
-		description string
-		target      *Target
-	}{
-		{
-			"Nil target",
-			nil,
-		},
-		{
-			"Empty target",
-			&Target{},
-		},
-		{
-			"No repository",
-			&Target{
-				ImageTag: "test123",
-			},
-		},
-		{
-			"No image tag",
-			&Target{
-				Repository: "testrepo",
-			},
-		},
-	}
-	for _, tt := range tests {
-		testname := tt.description
-		t.Run(testname, func(t *testing.T) {
-			report, err := evaluator.Evaluate(tt.target)
-			if err == nil {
-				t.Errorf("got %+v, want error", *report)
 			}
 		})
 	}

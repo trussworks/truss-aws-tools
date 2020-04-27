@@ -45,7 +45,9 @@ func (e *Evaluator) Evaluate(target *Target) (*Report, error) {
 	}
 	if e.isOldScan(findings.ImageScanFindings) {
 		e.Logger.Info("Most recent scan exceeds max scan age")
-		e.scan(target)
+		if scanErr := e.scan(target); scanErr != nil {
+			return nil, scanErr
+		}
 		findings, err = e.getImageFindings(target)
 		if err != nil {
 			return nil, err
@@ -53,10 +55,12 @@ func (e *Evaluator) Evaluate(target *Target) (*Report, error) {
 	} else {
 		e.Logger.Info("Generating scan report")
 	}
-	return e.generateReport(findings.ImageScanFindings), nil
+	return &Report{
+		TotalFindings: e.calculateTotalFindings(findings.ImageScanFindings),
+	}, nil
 }
 
-func (e *Evaluator) scan(target *Target) {
+func (e *Evaluator) scan(target *Target) error {
 	e.Logger.Info("Scanning image")
 	_, err := e.ECRClient.StartImageScan(&ecr.StartImageScanInput{
 		ImageId: &ecr.ImageIdentifier{
@@ -65,9 +69,10 @@ func (e *Evaluator) scan(target *Target) {
 		RepositoryName: aws.String(target.Repository),
 	})
 	if err != nil {
-		e.Logger.Fatal("Unable to start image scan",
+		e.Logger.Error("Unable to start image scan",
 			zap.String("error", err.Error()))
 	}
+	return err
 }
 
 func (e *Evaluator) getImageFindings(target *Target) (*ecr.DescribeImageScanFindingsOutput, error) {
@@ -85,7 +90,9 @@ func (e *Evaluator) getImageFindings(target *Target) (*ecr.DescribeImageScanFind
 				var aerr *ecr.ScanNotFoundException
 				if errors.As(err, &aerr) {
 					e.Logger.Info("No scan found for image")
-					e.scan(target)
+					if scanErr := e.scan(target); scanErr != nil {
+						return retry.Unrecoverable(errors.New("Error scanning image"))
+					}
 					return errors.New("Waiting for new scan to complete")
 				} else {
 					return retry.Unrecoverable(errors.New("Unable to describe scan findings"))
@@ -112,12 +119,6 @@ func (e *Evaluator) getImageFindings(target *Target) (*ecr.DescribeImageScanFind
 		return nil, errors.New("Unable to retrieve scan findings")
 	}
 	return scanFindings, nil
-}
-
-func (e *Evaluator) generateReport(findings *ecr.ImageScanFindings) *Report {
-	return &Report{
-		TotalFindings: e.calculateTotalFindings(findings),
-	}
 }
 
 func (e *Evaluator) isOldScan(findings *ecr.ImageScanFindings) bool {
