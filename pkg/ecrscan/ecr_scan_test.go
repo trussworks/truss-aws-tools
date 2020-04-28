@@ -333,37 +333,3 @@ func TestCalculateTotalFindings(t *testing.T) {
 		})
 	}
 }
-
-func TestGetImageFindings(t *testing.T) {
-	tests := []struct {
-		description string
-		target      *Target
-		expected    *ecr.DescribeImageScanFindingsOutput
-	}{
-		{
-			"Nonexistent image",
-			&Target{
-				ImageTag:   "test123",
-				Repository: "testrepo",
-			},
-			nil,
-		},
-		{
-			"Existing image",
-			&Target{
-				ImageTag:   "test100",
-				Repository: "testrepo",
-			},
-			testCases["test100"],
-		},
-	}
-	for _, tt := range tests {
-		testname := tt.description
-		t.Run(testname, func(t *testing.T) {
-			findings, _ := evaluator.getImageFindings(tt.target)
-			if findings != tt.expected {
-				t.Errorf("got %+v, want %+v", *findings, *tt.expected)
-			}
-		})
-	}
-}
