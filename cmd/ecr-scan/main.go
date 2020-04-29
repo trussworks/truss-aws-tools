@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/service/ecr"
@@ -19,6 +19,7 @@ import (
 var config *viper.Viper
 var logger *zap.Logger
 
+// This function is for establishing our session with AWS.
 func makeECRClient(region, profile string) *ecr.ECR {
 	sess := session.MustMakeSession(region, profile)
 	ecrClient := ecr.New(sess)
@@ -40,9 +41,15 @@ func evaluateImage() (string, error) {
 		logger.Error("Error evaluating target image", zap.Error(err))
 		return "", err
 	}
+	scanResultBytes, err := json.Marshal(scanResult)
+	if err != nil {
+		logger.Error("Error converting scan result to JSON", zap.Error(err))
+		return "", err
+	}
+	scanResultString := string(scanResultBytes)
 	logger.Info("Scan result",
-		zap.Int("totalFindings", scanResult.TotalFindings))
-	return strconv.Itoa(scanResult.TotalFindings), nil
+		zap.String("Report", scanResultString))
+	return scanResultString, nil
 }
 
 func HandleRequest(ctx context.Context, target ecrscan.Target) (string, error) {
