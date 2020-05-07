@@ -17,6 +17,7 @@ lambda_release: lambda_build
 install: pre-commit-install test
 	go install github.com/trussworks/truss-aws-tools/...
 
+.PHONY: test
 test: pre-commit
 	bin/make-test
 
