@@ -4,8 +4,8 @@ VERSION = 2.9
 all: install
 
 go_version: .go_version.stamp
-.go_version.stamp: bin/check_go_version
-	bin/check_go_version
+.go_version.stamp: bin/check-go-version
+	bin/check-go-version
 	touch .go_version.stamp
 
 lambda_build: pre-commit-install test
@@ -17,6 +17,7 @@ lambda_release: lambda_build
 install: pre-commit-install test
 	go install github.com/trussworks/truss-aws-tools/...
 
+.PHONY: test
 test: pre-commit
 	bin/make-test
 
