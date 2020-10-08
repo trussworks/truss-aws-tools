@@ -16,6 +16,7 @@ import (
 type Options struct {
 	Profile string `short:"p" long:"profile" description:"The AWS profile to use." required:"false" env:"AWS_PROFILE"`
 	Lambda  bool   `short:"l" long:"lambda" description:"Run as an AWS lambda function." required:"false" env:"LAMBDA"`
+	Region  string `long:"region" description:"The AWS region to use." required:"false" env:"AWS_REGION"`
 }
 
 var options Options
@@ -29,7 +30,7 @@ func makeSupportClient(region, profile string) *support.Support {
 
 func triggerRefresh() {
 	// Trusted Advisor only works in us-east-1
-	supportClient := makeSupportClient("us-east-1", options.Profile)
+	supportClient := makeSupportClient(options.Region, options.Profile)
 
 	tar := tarefresh.TrustedAdvisorRefresh{
 		Logger:        logger,
