@@ -1,8 +1,11 @@
-version: 2
+version: 2.1
 jobs:
   build:
     docker:
       - image: trussworks/circleci:29ab89fdada1f85c5d8fb685a2c71660f0c5f60c
+        auth:
+          password: $DOCKER_PASSWORD
+          username: $DOCKER_USERNAME
         environment:
           - TEST_RESULTS: /tmp/test-results
     steps:
@@ -28,3 +31,10 @@ jobs:
             - "~/go/pkg/mod"
       - store_test_results:
           path: /tmp/test-results/gotest
+workflows:
+  test:
+    jobs:
+      - test:
+          context:
+            - org-global
+  version: 2.1
