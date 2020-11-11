@@ -31,10 +31,10 @@ jobs:
             - "~/go/pkg/mod"
       - store_test_results:
           path: /tmp/test-results/gotest
-#workflows:
-#  test:
-#    jobs:
-#    - test:
-#        context:
-#          - org-global
-#  version: 2.1
+workflows:
+  build:
+    jobs:
+    - build:
+        context:
+          - org-global
+  version: 2.1
