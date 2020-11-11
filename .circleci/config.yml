@@ -34,7 +34,7 @@ jobs:
 workflows:
   test:
     jobs:
-      - test:
-          context:
-            - org-global
+    - test:
+        context:
+          - org-global
   version: 2.1
