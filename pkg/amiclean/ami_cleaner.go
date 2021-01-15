@@ -113,8 +113,6 @@ func (a *AMIClean) CheckUnused(image *ec2.Image) (bool, error) {
 	}
 
 	for _, imageLaunchPermission := range imageLaunchPermissions {
-		fmt.Println(imageLaunchPermission.UserId)
-
 		assumeRoleOutput, err := a.STSClient.AssumeRole(&sts.AssumeRoleInput{
 			RoleArn:         aws.String(fmt.Sprintf("arn:aws:iam::%s:role/%s", *imageLaunchPermission.UserId, "viewonly")),
 			RoleSessionName: aws.String(fmt.Sprintf("ami-cleaner-%s", a.NamePrefix)),
@@ -139,8 +137,17 @@ func (a *AMIClean) CheckUnused(image *ec2.Image) (bool, error) {
 		// If the Reservations attribute in the output isn't empty, then we
 		// know something is using that AMI and we can return false.
 		if output.Reservations != nil {
+			a.Logger.Info("found image running instance in aws account",
+				zap.String("account-id", *imageLaunchPermission.UserId),
+				zap.String("ami-id", *image.ImageId),
+			)
 			return false, nil
 		}
+
+		a.Logger.Info("no image running instance in aws account",
+			zap.String("account-id", *imageLaunchPermission.UserId),
+			zap.String("ami-id", *image.ImageId),
+		)
 
 	}
 

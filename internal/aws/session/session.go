@@ -30,6 +30,7 @@ func MakeSession(region, profile string) (*session.Session, error) {
 func MakeSessionWithSTSCredentials(stsCredentials *sts.Credentials) (*session.Session, error) {
 	awsConfig := aws.Config{
 		Credentials: credentials.NewStaticCredentials(*stsCredentials.AccessKeyId, *stsCredentials.SecretAccessKey, *stsCredentials.SessionToken),
+		Region:      aws.String("us-east-1"),
 	}
 	sessOpts := session.Options{
 		Config: awsConfig,
