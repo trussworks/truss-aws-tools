@@ -23,6 +23,7 @@ type Options struct {
 	TagValue      string `long:"tag-value" env:"TAG_VALUE" description:"Value of tag to operate on. If you specify a Value, you must also specify a Key."`
 	Invert        bool   `short:"i" long:"invert" env:"INVERT" description:"Operate in inverted mode -- only purge AMIs that do NOT match the Tag provided."`
 	Unused        bool   `long:"unused" env:"UNUSED" description:"Only purge AMIs for which no running instances were built from."`
+	Role          string `long:"sts-role" env:"STS_ROLE" required:"false" description:"The AWS IAM Role name used for cross-account unused AMIs checking."`
 	Profile       string `short:"p" long:"profile" env:"AWS_PROFILE" required:"false" description:"The AWS profile to use."`
 	Region        string `short:"r" long:"region" env:"AWS_REGION" required:"false" description:"The AWS region to use."`
 	Lambda        bool   `long:"lambda" required:"false" env:"LAMBDA" description:"Run as an AWS Lambda function."`
@@ -30,13 +31,6 @@ type Options struct {
 
 var options Options
 var logger *zap.Logger
-
-// This function is for establishing our session with AWS.
-func makeEC2Client(region, profile string) *ec2.EC2 {
-	sess := session.MustMakeSession(region, profile)
-	ec2Client := ec2.New(sess)
-	return ec2Client
-}
 
 func cleanImages() {
 	now := time.Now().UTC()
@@ -46,15 +40,19 @@ func cleanImages() {
 		logger.Fatal("must specify both a tag Key and tag Value")
 	}
 
+	sess := session.MustMakeSession(options.Region, options.Profile)
+
 	a := amiclean.AMIClean{
 		NamePrefix:     options.NamePrefix,
 		Tag:            &ec2.Tag{Key: aws.String(options.TagKey), Value: aws.String(options.TagValue)},
 		Delete:         options.Delete,
 		Invert:         options.Invert,
 		Unused:         options.Unused,
+		Role:           options.Role,
 		ExpirationDate: now.AddDate(0, 0, -int(options.RetentionDays)),
 		Logger:         logger,
-		EC2Client:      makeEC2Client(options.Region, options.Profile),
+		EC2Client:      session.MakeEC2Client(sess),
+		STSClient:      session.MakeSTSClient(sess),
 	}
 
 	// Get the list of images that we want to evaluate from AWS.
@@ -74,6 +72,7 @@ func cleanImages() {
 			if err != nil {
 				logger.Fatal("Failed to purge image",
 					zap.String("ami-id", *image.ImageId),
+					zap.String("ami-name", *image.Name),
 					zap.String("failure", retVal),
 					zap.Error(err),
 				)
@@ -83,10 +82,12 @@ func cleanImages() {
 			if a.Delete {
 				logger.Info("Successfully purged image",
 					zap.String("ami-id", retVal),
+					zap.String("ami-name", *image.Name),
 				)
 			} else {
 				logger.Info("Would have purged image",
 					zap.String("ami-id", retVal),
+					zap.String("ami-name", *image.Name),
 				)
 			}
 		}

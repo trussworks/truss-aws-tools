@@ -1,8 +1,12 @@
 package amiclean
 
 import (
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/trussworks/truss-aws-tools/internal/aws/session"
 	"go.uber.org/zap"
 
 	"strings"
@@ -22,9 +26,11 @@ type AMIClean struct {
 	Tag            *ec2.Tag
 	Invert         bool
 	Unused         bool
+	Role           string
 	ExpirationDate time.Time
 	Logger         *zap.Logger
 	EC2Client      *ec2.EC2
+	STSClient      *sts.STS
 }
 
 // GetImages gets us all the private AMIs on our account so that they can be
@@ -71,39 +77,94 @@ func matchTags(image *ec2.Image, tag *ec2.Tag) (bool, *ec2.Tag) {
 	return false, &ec2.Tag{Key: tag.Key, Value: aws.String("not found")}
 }
 
+func (a *AMIClean) getImageLaunchPermission(image *ec2.Image) ([]*ec2.LaunchPermission, error) {
+	// Create an input into DescribeImageAttributeInput to retrieve image launch permissions.
+	describeImageAttributeInput := &ec2.DescribeImageAttributeInput{
+		Attribute: aws.String("launchPermission"),
+		ImageId:   image.ImageId,
+	}
+	output, err := a.EC2Client.DescribeImageAttribute(describeImageAttributeInput)
+	if err != nil {
+		return nil, err
+	}
+	return output.LaunchPermissions, nil
+}
+
+func (a *AMIClean) checkAccountUnused(ec2Client *ec2.EC2, accountID *string, image *ec2.Image) (bool, error) {
+
+	amiFilter := &ec2.Filter{
+		Name:   aws.String("image-id"),
+		Values: []*string{image.ImageId},
+	}
+
+	findInstancesInput := &ec2.DescribeInstancesInput{
+		Filters: []*ec2.Filter{amiFilter},
+	}
+
+	output, err := ec2Client.DescribeInstances(findInstancesInput)
+	if err != nil {
+		return false, err
+	}
+
+	if output.Reservations != nil {
+		a.Logger.Info("found image running instance in aws account",
+			zap.String("account-id", *accountID),
+			zap.String("ami-id", *image.ImageId),
+			zap.String("ami-name", *image.Name),
+		)
+		return false, nil
+	}
+
+	return true, nil
+}
+
 // CheckUnused takes an image and then checks to see if it is in use
-// as an instance. If the image is in use, it should return false; if it
-// is not in use, it should return true. Note that we're only checking for
-// AMIs we own with this account in this account; if we've shared them
-// with other accounts, we have no idea if they are being used (and
-// finding out is nontrivial, unfortunately).
+// on a running ec2 instance. If a cross account sts role has
+// been provided, it checks on the image owner and all aws accounts listed in
+// the image launch permissions.
+// If a cross account sts role hasn't been provided, it checks
+// on the image owner account only.
+// If the image is in use, it should return false; if it
+// is not in use, it should return true.
 // TODO: Also check to see if we are using it for any ASG launch
 // configurations. This is more difficult because you cannot filter them
 // by AMI ID like you can with instances; you have to fetch all of them
 // and then parse through them doing the comparison, making it much more
 // onerous. :/
 func (a *AMIClean) CheckUnused(image *ec2.Image) (bool, error) {
-	// First we define a filter we can use.
-	amiFilter := &ec2.Filter{
-		Name:   aws.String("image-id"),
-		Values: []*string{image.ImageId},
+
+	if a.Role == "" {
+		return a.checkAccountUnused(a.EC2Client, image.OwnerId, image)
 	}
-	// Now, we use that filter to create an input into DescribeInstances.
-	findInstancesInput := &ec2.DescribeInstancesInput{
-		Filters: []*ec2.Filter{amiFilter},
-	}
-	output, err := a.EC2Client.DescribeInstances(findInstancesInput)
+
+	imageAccountIDs := []*string{image.OwnerId}
+
+	imageLaunchPermissions, err := a.getImageLaunchPermission(image)
 	if err != nil {
 		return false, err
 	}
 
-	// If the Reservations attribute in the output isn't empty, then we
-	// know something is using that AMI and we can return false.
-	if output.Reservations != nil {
-		return false, nil
+	for _, imageLaunchPermission := range imageLaunchPermissions {
+		imageAccountIDs = append(imageAccountIDs, imageLaunchPermission.UserId)
 	}
 
-	// If we've gotten to this point, this AMI is unused.
+	for _, imageAccountID := range imageAccountIDs {
+		assumeRoleOutput, err := a.STSClient.AssumeRole(&sts.AssumeRoleInput{
+			RoleArn:         aws.String(fmt.Sprintf("arn:aws:iam::%s:role/%s", *imageAccountID, a.Role)),
+			RoleSessionName: aws.String(fmt.Sprintf("ami-cleaner-%s", a.NamePrefix)),
+		})
+
+		if err != nil {
+			return false, err
+		}
+
+		stsEC2Client := session.MakeEC2Client(session.MustMakeSessionWithSTSCredentials(assumeRoleOutput.Credentials))
+
+		if result, err := a.checkAccountUnused(stsEC2Client, imageAccountID, image); err != nil || !result {
+			return result, err
+		}
+	}
+
 	return true, nil
 }
 
@@ -130,6 +191,7 @@ func (a *AMIClean) CheckImage(image *ec2.Image) bool {
 		if err != nil {
 			a.Logger.Error("Could not check for image in use",
 				zap.String("ami-id", *image.ImageId),
+				zap.String("ami-name", *image.Name),
 				zap.Error(err),
 			)
 			// If errored out, we want to bail out for safety.
@@ -174,6 +236,7 @@ func (a *AMIClean) PurgeImage(image *ec2.Image) (string, error) {
 	if *image.RootDeviceType != "ebs" {
 		a.Logger.Info("image root device not EBS; will not purge",
 			zap.String("ami-id", *image.ImageId),
+			zap.String("ami-name", *image.Name),
 		)
 	} else {
 		// There may be multiple snapshots attached to a single AMI,
@@ -192,6 +255,7 @@ func (a *AMIClean) PurgeImage(image *ec2.Image) (string, error) {
 		if a.Delete {
 			a.Logger.Info("deregistering ami",
 				zap.String("ami-id", *image.ImageId),
+				zap.String("ami-name", *image.Name),
 			)
 			_, err := a.EC2Client.DeregisterImage(deregisterInput)
 			if err != nil {
@@ -200,6 +264,7 @@ func (a *AMIClean) PurgeImage(image *ec2.Image) (string, error) {
 		} else {
 			a.Logger.Info("would deregister ami",
 				zap.String("ami-id", *image.ImageId),
+				zap.String("ami-name", *image.Name),
 			)
 		}
 		for _, snapshot := range snapshotIds {
