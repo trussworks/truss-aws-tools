@@ -31,13 +31,6 @@ type Options struct {
 var options Options
 var logger *zap.Logger
 
-// This function is for establishing our session with AWS.
-func makeEC2Client(region, profile string) *ec2.EC2 {
-	sess := session.MustMakeSession(region, profile)
-	ec2Client := ec2.New(sess)
-	return ec2Client
-}
-
 func cleanImages() {
 	now := time.Now().UTC()
 	// We need to check to make sure that if we have a Tag Key, we also have
@@ -45,6 +38,8 @@ func cleanImages() {
 	if (options.TagKey == "") != (options.TagValue == "") {
 		logger.Fatal("must specify both a tag Key and tag Value")
 	}
+
+	sess := session.MustMakeSession(options.Region, options.Profile)
 
 	a := amiclean.AMIClean{
 		NamePrefix:     options.NamePrefix,
@@ -54,7 +49,8 @@ func cleanImages() {
 		Unused:         options.Unused,
 		ExpirationDate: now.AddDate(0, 0, -int(options.RetentionDays)),
 		Logger:         logger,
-		EC2Client:      makeEC2Client(options.Region, options.Profile),
+		EC2Client:      session.MakeEC2Client(sess),
+		STSClient:      session.MakeSTSClient(sess),
 	}
 
 	// Get the list of images that we want to evaluate from AWS.
