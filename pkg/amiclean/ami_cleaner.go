@@ -80,6 +80,7 @@ func (a *AMIClean) getImageLaunchPermission(image *ec2.Image) ([]*ec2.LaunchPerm
 	// Create an input into DescribeImageAttributeInput to retrieve image launch permissions.
 	describeImageAttributeInput := &ec2.DescribeImageAttributeInput{
 		Attribute: aws.String("launchPermission"),
+		ImageId:   image.ImageId,
 	}
 	output, err := a.EC2Client.DescribeImageAttribute(describeImageAttributeInput)
 	if err != nil {
