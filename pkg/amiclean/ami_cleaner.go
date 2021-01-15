@@ -116,7 +116,7 @@ func (a *AMIClean) CheckUnused(image *ec2.Image) (bool, error) {
 		fmt.Println(imageLaunchPermission.UserId)
 
 		assumeRoleOutput, err := a.STSClient.AssumeRole(&sts.AssumeRoleInput{
-			RoleArn:         aws.String(fmt.Sprintf("arn:aws:iam::%p:role/%s", imageLaunchPermission.UserId, "viewonly")),
+			RoleArn:         aws.String(fmt.Sprintf("arn:aws:iam::%s:role/%s", *imageLaunchPermission.UserId, "viewonly")),
 			RoleSessionName: aws.String(fmt.Sprintf("ami-cleaner-%s", a.NamePrefix)),
 		})
 
