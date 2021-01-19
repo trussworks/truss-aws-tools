@@ -10,7 +10,7 @@ cleanup() {
 }
 trap "cleanup" EXIT INT
 build_dir=$(mktemp -d)
-lambda_tools="rds-snapshot-cleaner trusted-advisor-refresh iam-keys-check aws-health-notifier ami-cleaner packer-janitor"
+lambda_tools="rds-snapshot-cleaner trusted-advisor-refresh iam-keys-check aws-health-notifier ami-cleaner packer-janitor ebs-snapshot-cleaner"
 readonly build_dir
 readonly lambda_tools
 mkdir -p "$build_dir"
