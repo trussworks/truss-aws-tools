@@ -188,6 +188,7 @@ func TestPurgeImage(t *testing.T) {
 		ExpirationDate: now.AddDate(0, 0, -1),
 		Logger:         logger,
 		EC2Client:      nil,
+		STSClient:      nil,
 	}
 
 	for _, image := range testImages {
