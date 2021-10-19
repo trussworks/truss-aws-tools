@@ -39,11 +39,20 @@ func (e *EBSSnapshotClean) GetEBSSnapshots() ([]*ec2.Snapshot, error) {
 }
 
 // CheckEBSSnapshot checks if an ebs snapshot is a candidate for deletion
-func (e *EBSSnapshotClean) CheckEBSSnapshot(snapshot *ec2.Snapshot) bool {
+func (e *EBSSnapshotClean) CheckEBSSnapshot(snapshot *ec2.Snapshot, excludeTag *ec2.Tag) bool {
 	// Next, check the snapshot's age and compare it to our expiration date.
-	// If it's not old enough, we can return false.
+	// If it's not old enough, we can return false
+	// If it's old enough and the snapshot doesn't have the exclude tag, we can return true
 	snapshotCreationTime := *snapshot.StartTime
-	return !snapshotCreationTime.After(e.ExpirationDate)
+	if !snapshotCreationTime.After(e.ExpirationDate) {
+		for _, tag := range snapshot.Tags {
+			if *tag.Key == *excludeTag.Key && *tag.Value == *excludeTag.Value {
+				return false
+			}
+		}
+		return true
+	}
+	return false
 }
 
 // DeleteEBSSnapshot deletes ebs snapshot and waits for it to complete
