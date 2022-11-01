@@ -1,0 +1,35 @@
+{
+  "extends": [
+    "config:base"
+  ],
+  "packageRules": [
+    {
+      "automerge": true,
+      "matchUpdateTypes": [
+        "patch",
+        "pin",
+        "digest"
+      ]
+    },
+    {
+      "groupName": "dependencies",
+      "managers": [
+        "terraform",
+        "pre-commit"
+      ],
+      "matchUpdateTypes": [
+        "minor"
+      ]
+    }
+  ],
+  "prConcurrentLimit": 2,
+  "pre-commit": {
+    "enabled": true
+  },
+  "schedule": [
+    "every weekday",
+    "after 9am and before 5pm"
+  ],
+  "separateMinorPatch": true,
+  "timezone": "America/Los_Angeles"
+}
