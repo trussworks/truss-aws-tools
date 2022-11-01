@@ -22,8 +22,7 @@ repos:
     rev: v1.50.1
     hooks:
       - id: golangci-lint
-        entry: golangci-lint run --verbose
-        verbose: true
+        entry: golangci-lint run
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.32.2
     hooks:

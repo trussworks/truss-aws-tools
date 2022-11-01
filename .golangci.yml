@@ -1,29 +1,22 @@
 linters-settings:
-    settings:
-      printf:
-        funcs:
-          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Infof
-          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
-          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
-          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
-      govet:
-        check-shadowing: true
+  settings:
+    printf:
+      funcs:
+        - (github.com/golangci/golangci-lint/pkg/logutils.Log).Infof
+        - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
+        - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
+        - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
+    govet:
+      check-shadowing: true
 linters:
   enable:
-     - gosec
-     - golint
-     - gofmt
-     - goimports
-     - govet
-     - varcheck
-     - typecheck
-     - structcheck
-     - deadcode
-     - errcheck
-     - gosimple
-     - ineffassign
-     - staticcheck
-     - unused
+    - gosec
+    - gofmt
+    - goimports
+    - govet
+    - errcheck
+    - gosimple
+    - staticcheck
 issues:
   fix: true
 run:
