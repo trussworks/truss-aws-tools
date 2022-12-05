@@ -3,11 +3,6 @@ VERSION = 3.0
 
 all: install
 
-go_version: .go_version.stamp
-.go_version.stamp: bin/check-go-version
-	bin/check-go-version
-	touch .go_version.stamp
-
 lambda_build: pre-commit-install test
 	bin/make-lambda-build
 
@@ -41,4 +36,4 @@ prereqs: .prereqs.stamp
 clean:
 	rm -f .*.stamp *.zip
 
-.PHONY: clean go_version all test pre-commit pre-commit-install prereqs
+.PHONY: clean all test pre-commit pre-commit-install prereqs

@@ -1,12 +1,4 @@
 repos:
-  - repo: local
-    hooks:
-      - id: go-version
-        name: go version
-        entry: bin/check-go-version
-        language: script
-        types: [go]
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
