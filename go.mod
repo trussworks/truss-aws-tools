@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/aws/aws-lambda-go v1.36.0
-	github.com/aws/aws-sdk-go v1.44.158
+	github.com/aws/aws-sdk-go v1.44.159
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/lytics/slackhook v0.0.0-20160630154540-a52fd449b27d
 	github.com/pkg/errors v0.9.1
