@@ -3,7 +3,7 @@ module github.com/trussworks/truss-aws-tools
 go 1.19
 
 require (
-	github.com/aws/aws-lambda-go v1.37.0
+	github.com/aws/aws-lambda-go v1.38.0
 	github.com/aws/aws-sdk-go v1.44.208
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/lytics/slackhook v0.0.0-20160630154540-a52fd449b27d
