@@ -65,6 +65,10 @@ func cleanImages() {
 
 	// For each image in the list, check to see if it matches the criteria.
 	for _, image := range availableImages.Images {
+		logger.Info("Checking image",
+			zap.String("ami-id", *image.ImageId),
+			zap.String("ami-name", *image.Name),
+		)
 		if a.CheckImage(image) {
 			// If it matches the criteria, we want to delete it.
 			retVal, err := a.PurgeImage(image)
