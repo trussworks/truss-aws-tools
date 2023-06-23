@@ -145,7 +145,9 @@ func (a *AMIClean) CheckUnused(image *ec2.Image) (bool, error) {
 	}
 
 	for _, imageLaunchPermission := range imageLaunchPermissions {
-		imageAccountIDs = append(imageAccountIDs, imageLaunchPermission.UserId)
+		if imageLaunchPermission.UserId != nil {
+			imageAccountIDs = append(imageAccountIDs, imageLaunchPermission.UserId)
+		}
 	}
 
 	for _, imageAccountID := range imageAccountIDs {
