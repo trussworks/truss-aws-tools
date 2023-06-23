@@ -71,6 +71,10 @@ func cleanImages() {
 		)
 		if a.CheckImage(image) {
 			// If it matches the criteria, we want to delete it.
+			logger.Info("Purging image",
+				zap.String("ami-id", *image.ImageId),
+				zap.String("ami-name", *image.Name),
+			)
 			retVal, err := a.PurgeImage(image)
 			// If we get an error, we stop the train.
 			if err != nil {
