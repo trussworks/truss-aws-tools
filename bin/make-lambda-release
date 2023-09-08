@@ -12,6 +12,10 @@ usage() {
 set -u
 readonly s3_bucket=$1
 readonly semver=$2
-readonly zip_file="truss-aws-tools.zip"
 
-aws s3 cp --sse AES256 "$zip_file" s3://"$s3_bucket"/truss-aws-tools/"$semver"/
+lambda_tools="rds-snapshot-cleaner trusted-advisor-refresh iam-keys-check aws-health-notifier ami-cleaner packer-janitor ebs-snapshot-cleaner"
+for cmd in $lambda_tools
+do
+    zip_file="$cmd.zip"
+    aws s3 cp --sse AES256 "$zip_file" s3://"$s3_bucket"/truss-aws-tools/"$semver"/
+done

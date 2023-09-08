@@ -1,5 +1,5 @@
 SHELL = /bin/sh
-VERSION = 3.7
+VERSION = 3.8
 
 all: install
 

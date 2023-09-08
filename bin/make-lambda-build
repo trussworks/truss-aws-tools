@@ -9,6 +9,7 @@ cleanup() {
   fi
 }
 trap "cleanup" EXIT INT
+
 build_dir=$(mktemp -d)
 lambda_tools="rds-snapshot-cleaner trusted-advisor-refresh iam-keys-check aws-health-notifier ami-cleaner packer-janitor ebs-snapshot-cleaner"
 readonly build_dir
@@ -18,7 +19,6 @@ mkdir -p "$build_dir"
 for cmd in $lambda_tools
 do
     cmd_name=$(basename "$cmd")
-    GOARCH=amd64 GOOS=linux go build -o "$build_dir/$cmd_name" ./cmd/"$cmd_name"
+    GOARCH=amd64 GOOS=linux go build -tags lambda.norpc -o "$build_dir/$cmd_name/bootstrap" ./cmd/"$cmd_name"
+    zip -j "$cmd_name".zip "$build_dir"/"$cmd_name"/*
 done
-
-zip -j truss-aws-tools.zip "$build_dir"/*
