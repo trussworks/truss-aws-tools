@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: trailing-whitespace
       - id: check-merge-conflict
@@ -11,12 +11,12 @@ repos:
         args:
           - --autofix
   - repo: https://github.com/golangci/golangci-lint
-    rev: v1.53.3
+    rev: v1.57.1
     hooks:
       - id: golangci-lint
         entry: golangci-lint run
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.35.0
+    rev: v0.39.0
     hooks:
       - id: markdownlint
   - repo: https://github.com/jumanjihouse/pre-commit-hooks
